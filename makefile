@@ -1,10 +1,10 @@
 .PHONY: bench sloc lex
 
-lex:
-	clang -O3 lex.c
+test: lex.h lex.c test.c
+	clang -O3 lex.c test.c -o test
 
 sloc:
 	cat lex.c | grep . | grep -v "//" | wc -l
 
-docs: lexlex.c
+docs: lex.c
 	docco lex.c
