@@ -2,7 +2,7 @@
 
 #include "lex.h"
 
-#define likely(x) (__builtin_expect(x, 1))
+#define likely(x)   (__builtin_expect(x, 1))
 #define unlikely(x) (__builtin_expect(x, 0))
 
 
@@ -234,7 +234,7 @@ lexeme (punctuation_long, PunctuationType, ctx, tok, {
 // Based on the first character of the input buffer,
 // we route the tokenization process to a specific lexeme.
 
-void route(Ctx *const ctx, const Cont ret) {
+void lex(Ctx *const ctx, const Cont ret) {
 
   switch (ctx->buf[0]) {
 

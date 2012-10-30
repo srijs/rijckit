@@ -57,4 +57,4 @@ typedef void (*Cont)
 
 // ## Interface
 
-void route(Ctx *const ctx, const Cont ret);
+void lex(Ctx *const ctx, const Cont ret);
