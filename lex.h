@@ -63,7 +63,7 @@ typedef void (*NS(Cont))
 
 // ## Interface
 
-void lex(NS(Ctx) *const ctx, const NS(Cont) ret);
+void lex(NS(Ctx) *const, const NS(Cont));
 
 
 
