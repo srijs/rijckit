@@ -21,7 +21,7 @@
 // ### Lexeme: Number
 // Fail.
 
-lexeme (number, NumberType, ctx, tok, {
+lexeme (number, Number, ctx, tok, {
 
   tok = (Tok){Fail};
 
@@ -36,7 +36,7 @@ lexeme (number, NumberType, ctx, tok, {
 // Thus the length of the token is undecided, as long as we don't see a
 // terminating character (that can't be contained in an identifier).
 
-lexeme (identifier, IdentifierType, ctx, tok, {
+lexeme (identifier, Identifier, ctx, tok, {
 
   tok = (Tok){Undecided};
 
@@ -65,7 +65,7 @@ lexeme (identifier, IdentifierType, ctx, tok, {
 // Thus the length of the token is undecided, as long as we don't see a
 // terminating character (that can't be contained in whitespace).
 
-lexeme (whitespace, WhitespaceType, ctx, tok, {
+lexeme (whitespace, Whitespace, ctx, tok, {
 
   tok = (Tok){Undecided};
 
@@ -89,7 +89,7 @@ lexeme (whitespace, WhitespaceType, ctx, tok, {
 // ### Lexeme: String
 // Fail.
 
-lexeme (string, StringType, ctx, tok, {
+lexeme (string, String, ctx, tok, {
 
   tok = (Tok){Fail};
 
@@ -102,7 +102,7 @@ lexeme (string, StringType, ctx, tok, {
 // A character literal is an ASCII-identifier between
 // two single quotes.
 
-lexeme (character, CharacterType, ctx, tok, {
+lexeme (character, Character, ctx, tok, {
 
   // If the first character inside the quotes
   // is not a backslash, it is a simple literal
@@ -142,7 +142,7 @@ lexeme (character, CharacterType, ctx, tok, {
 
 // ### Lexeme: Punctuation (short)
 
-lexeme (punctuation_short, PunctuationType, ctx, tok, {
+lexeme (punctuation_short, Punctuation, ctx, tok, {
 
   tok = (Tok){Success, 1};
 
@@ -151,7 +151,7 @@ lexeme (punctuation_short, PunctuationType, ctx, tok, {
 
 // ### Lexeme: Punctuation (long)
 
-lexeme (punctuation_long, PunctuationType, ctx, tok, {
+lexeme (punctuation_long, Punctuation, ctx, tok, {
 
   if unlikely (ctx->sz == 1) tok = (Tok){Undecided};
 
@@ -239,7 +239,7 @@ void lex(Ctx *const ctx, const Cont ret) {
   switch (ctx->buf[0]) {
 
     case '\0':
-    return ret(ctx, UndefinedType, (Tok){End});
+    return ret(ctx, Undefined, (Tok){End});
 
     case '0'...'9':
     return number(ctx, ret);
@@ -274,7 +274,7 @@ void lex(Ctx *const ctx, const Cont ret) {
     return punctuation_long(ctx, ret);
 
     default:
-    return ret(ctx, UndefinedType, (Tok){Fail});
+    return ret(ctx, Undefined, (Tok){Fail});
 
   }
 

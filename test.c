@@ -3,23 +3,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define NS(id) lex ## id
 #include "lex.h"
 
-void print_tok(Ctx *const ctx, const Type type, const Tok tok) {
+void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
 
   char *tok_str[] = {
-    [UndefinedType] = "Undefined",
-    [NumberType] = "Number",
-    [IdentifierType] = "Identifier",
-    [WhitespaceType] = "Whitespace",
-    [StringType] = "String",
-    [CharacterType] = "Character",
-    [PunctuationType] = "Punctuation"
+    [lexUndefined] = "Undefined",
+    [lexNumber] = "Number",
+    [lexIdentifier] = "Identifier",
+    [lexWhitespace] = "Whitespace",
+    [lexString] = "String",
+    [lexCharacter] = "Character",
+    [lexPunctuation] = "Punctuation"
   };
 
   switch (tok.state) {
 
-    case Success:
+    case lexSuccess:
     if (tok.len < ctx->sz) {
       ctx->sz  = ctx->sz - tok.len;
       ctx->buf = &ctx->buf[tok.len];
@@ -27,11 +28,11 @@ void print_tok(Ctx *const ctx, const Type type, const Tok tok) {
     }
     return exit(0);
 
-    case Fail:
+    case lexFail:
     printf("Fail, Tok: %s, Char: %u\n", tok_str[type], ctx->buf[0]);
     return exit(0);
 
-    case Undecided:
+    case lexUndecided:
     printf("Undecided, Tok: %s\n", tok_str[type]);
     if (ctx->sz < ctx->back_sz) {
       memmove(ctx->back_buf, ctx->buf, ctx->sz);
@@ -50,7 +51,7 @@ void print_tok(Ctx *const ctx, const Type type, const Tok tok) {
     }
     return exit(0);
 
-    case End:
+    case lexEnd:
     printf("End\n");
     return exit(0);
 
@@ -61,7 +62,7 @@ void print_tok(Ctx *const ctx, const Type type, const Tok tok) {
 int main(void) {
 
   char buf[1024];
-  Ctx ctx = {1024, 1024, buf, buf};
+  lexCtx ctx = {1024, 1024, buf, buf};
 
   read(0, ctx.buf, 1024);
   lex(&ctx, print_tok);

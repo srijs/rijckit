@@ -1,3 +1,10 @@
+#ifndef NS
+#define NS_LOCAL
+#define NS(id) id
+#endif
+
+
+
 // ## Fundamental Types
 
 
@@ -10,7 +17,7 @@
 typedef struct {
   size_t sz, back_sz;
   char *buf, *back_buf;
-} Ctx;
+} NS(Ctx);
 
 
 // ### Token Types
@@ -21,14 +28,14 @@ typedef struct {
 // comments are also understood as punctuation.
 
 typedef enum {
-  UndefinedType,
-  NumberType,
-  IdentifierType,
-  WhitespaceType,
-  StringType,
-  CharacterType,
-  PunctuationType
-} Type;
+  NS(Undefined),
+  NS(Number),
+  NS(Identifier),
+  NS(Whitespace),
+  NS(String),
+  NS(Character),
+  NS(Punctuation)
+} NS(Type);
 
 
 // ### Token Structure
@@ -37,24 +44,31 @@ typedef enum {
 
 typedef struct {
   enum {
-    Success, Fail,
-    Undecided, End
+    NS(Success), NS(Fail),
+    NS(Undecided), NS(End)
   } state;
   size_t len;
-} Tok;
+} NS(Tok);
 
 
 // ### Continuation Type
 // Since we'll program in Continuation-Passing-Style, we define
 // the type of our continuation.
 
-typedef void (*Cont)
-  (Ctx *const,
-   const Type,
-   const Tok);
+typedef void (*NS(Cont))
+  (NS(Ctx) *const,
+   const NS(Type),
+   const NS(Tok));
 
 
 
 // ## Interface
 
-void lex(Ctx *const ctx, const Cont ret);
+void lex(NS(Ctx) *const ctx, const NS(Cont) ret);
+
+
+
+#ifdef NS_LOCAL
+#undef NS
+#undef NS_LOCAL
+#endif
