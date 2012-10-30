@@ -1,5 +1,4 @@
 #ifndef NS
-#define NS_LOCAL
 #define NS(id) id
 #endif
 
@@ -23,7 +22,7 @@ typedef struct {
 // ### Token Types
 // We operate on a small set of tokens types.
 // Keywords, typenames and identifiers are summarized under the
-// `IdentifierType` token type.
+// `Identifier` token type.
 // All kinds of punctuations have a common type,
 // comments are also understood as punctuation.
 
@@ -68,7 +67,4 @@ void lex(NS(Ctx) *const ctx, const NS(Cont) ret);
 
 
 
-#ifdef NS_LOCAL
 #undef NS
-#undef NS_LOCAL
-#endif
