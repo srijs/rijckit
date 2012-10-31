@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 
 #include "lex.h"
 
@@ -161,6 +162,13 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
 
     switch (ctx->buf[0]) {
 
+      // In the simple cases, just an equal-sign may follow...
+
+      case '!': case '&':
+      case '=': case '*':
+      tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
+      break;
+
       // Is three-way-conditional?
 
       case '?':
@@ -215,12 +223,13 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
       }
       else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
       end: break;
-
-      // Else equal-sign may follow...
-
+      
+      // Since we have handled all possible cases,
+      // we can declare the following codepath as
+      // undefined.
+      
       default:
-      tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
-      break;
+      __builtin_unreachable();
 
     }
 
