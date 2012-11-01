@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <assert.h>
 
 #include "lex.h"
 
@@ -164,9 +163,22 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
 
       // In the simple cases, just an equal-sign may follow...
 
-      case '!': case '&':
+      case '!': case '^':
       case '=': case '*':
+      case '%':
       tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
+      break;
+
+      // Is double-and or and-equals?
+
+      case '&':
+      tok = (Tok){Success, unlikely (suc == '&' || suc == '=') ? 2 : 1};
+      break;
+
+      // Is double-or or or-equals?
+
+      case '|':
+      tok = (Tok){Success, unlikely (suc == '|' || suc == '=') ? 2 : 1};
       break;
 
       // Is three-way-conditional?
@@ -279,7 +291,8 @@ void lex(Ctx *const ctx, const Cont ret) {
     case '=': case '?':
     case '*': case '/':
     case '+': case '-':
-    case '.':
+    case '.': case '^':
+    case '&': case '|':
     return punctuation_long(ctx, ret);
 
     default:
