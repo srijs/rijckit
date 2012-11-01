@@ -33,8 +33,8 @@ lexeme (number, Number, ctx, tok, {
 //
 // An identifier is an _arbitrary long_ sequence of alphanumerics and
 // underscore characters.
-// Thus the length of the token is undecided, as long as we don't see a
-// terminating character (that can't be contained in an identifier).
+// Thus the length of the token is undecided, as long as we don't see
+// a terminating character (that can't be contained in an identifier).
 
 lexeme (identifier, Identifier, ctx, tok, {
 
@@ -62,8 +62,8 @@ lexeme (identifier, Identifier, ctx, tok, {
 //
 // Whitespace is an _arbitrary long_ sequence of space, tab, new-line
 // and carriage-return characters.
-// Thus the length of the token is undecided, as long as we don't see a
-// terminating character (that can't be contained in whitespace).
+// Thus the length of the token is undecided, as long as we don't see
+// a terminating character (that can't be contained in whitespace).
 
 lexeme (whitespace, Whitespace, ctx, tok, {
 
@@ -130,19 +130,18 @@ lexeme (string, String, ctx, tok, {
 // ### Lexeme: Character
 // `character ::= S-Quote ( Esc-Seq | Char ) S-Quote`
 //
-// A character literal is an ASCII-identifier between
-// two single quotes.
+// A character literal is an ASCII-identifier between two single
+// quotes.
 
 lexeme (character, Character, ctx, tok, {
 
-  // If the first character inside the quotes
-  // is not a backslash, it is a simple literal
-  // with a single character between the quotes.
-  //
-  // In this case, when the current buffer holds
-  // less than three characters, the token is undecided.
-  // If the third character is a terminating single quote,
-  // the tokenization is successful with length three.
+  // If the first character inside the quotes is not a backslash,
+  // it is a simple literal with a single character between the
+  // quotes.
+  // In this case, when the current buffer holds less than three
+  // characters, the token is undecided. If the third character is a
+  // terminating single quote, the tokenization is successful with
+  // length three.
 
   if likely (ctx->buf[1] != '\\') {
     if likely (ctx->sz >= 3) {
@@ -154,9 +153,8 @@ lexeme (character, Character, ctx, tok, {
     else tok = (Tok){Undecided};
   }
 
-  // Otherwise, the literal is more complex
-  // with a character escape sequence between
-  // the quotes.
+  // Otherwise, the literal is more complex with a character escape
+  // sequence between the quotes.
 
   else {
     if likely (ctx->sz >= 4) {
@@ -203,13 +201,15 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
       // Is double-and or and-equals?
 
       case '&':
-      tok = (Tok){Success, unlikely (suc == '&' || suc == '=') ? 2 : 1};
+      tok = (Tok){Success, unlikely (suc == '&'
+                                  || suc == '=') ? 2 : 1};
       break;
 
       // Is double-or or or-equals?
 
       case '|':
-      tok = (Tok){Success, unlikely (suc == '|' || suc == '=') ? 2 : 1};
+      tok = (Tok){Success, unlikely (suc == '|'
+                                  || suc == '=') ? 2 : 1};
       break;
 
       // Is three-way-conditional?
@@ -221,33 +221,40 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
       // Is double-plus or plus-equals?
 
       case '+':
-      tok = (Tok){Success, unlikely (suc == '+' || suc == '=') ? 2 : 1};
+      tok = (Tok){Success, unlikely (suc == '+'
+                                  || suc == '=') ? 2 : 1};
       break;
 
       // Is double-minus, arrow, or minus-equals?
 
       case '-':
-      tok = (Tok){Success, unlikely (suc == '-' || suc == '>' || suc == '=') ? 2 : 1};
+      tok = (Tok){Success, unlikely (suc == '-'
+                                  || suc == '>'
+                                  || suc == '=') ? 2 : 1};
       break;
 
       // Is double-left-arrow or less-or-equal?
 
       case '<':
-      tok = (Tok){Success, unlikely (suc == '<' || suc == '=') ? 2 : 1};
+      tok = (Tok){Success, unlikely (suc == '<'
+                                  || suc == '=') ? 2 : 1};
       break;
 
       // Is double-right-arrow or greater-or-equal?
 
       case '>':
-      tok = (Tok){Success, unlikely (suc == '>' || suc == '=') ? 2 : 1};
+      tok = (Tok){Success, unlikely (suc == '>'
+                                  || suc == '=') ? 2 : 1};
       break;
 
       // Is ellipsis or dot?
 
       case '.':
       if unlikely (suc == '.') {
-        if likely (ctx->sz >= 3) tok = (Tok){Success, likely (ctx->buf[2] == '.') ? 3 : 1};
-        else                     tok = (Tok){Undecided};
+        if likely (ctx->sz >= 3)
+             tok = (Tok){Success,
+                         likely (ctx->buf[2] == '.') ? 3 : 1};
+        else tok = (Tok){Undecided};
       }
       else tok = (Tok){Success, 1};
       break;
@@ -257,7 +264,8 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
       case '/':
       if unlikely (suc == '/') {
         for (size_t len = 2; len < ctx->sz; len++) {
-          if unlikely (ctx->buf[len] == '\n' || ctx->buf[len] == '\r') {
+          if unlikely (ctx->buf[len] == '\n'
+                    || ctx->buf[len] == '\r') {
             tok = (Tok){Success, len};
             goto end;
           }
@@ -267,9 +275,8 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
       else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
       end: break;
       
-      // Since we have handled all possible cases,
-      // we can declare the following codepath as
-      // undefined.
+      // Since we have handled all possible cases, we can declare the
+      // following codepath as undefined.
       
       default:
       __builtin_unreachable();
@@ -283,8 +290,8 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
 
 
 // ## Routing
-// Based on the first character of the input buffer,
-// we route the tokenization process to a specific lexeme.
+// Based on the first character of the input buffer, we route the
+// tokenization process to a specific lexeme.
 
 void lex(Ctx *const ctx, const Cont ret) {
 
