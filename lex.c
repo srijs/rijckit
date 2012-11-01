@@ -91,7 +91,38 @@ lexeme (whitespace, Whitespace, ctx, tok, {
 
 lexeme (string, String, ctx, tok, {
 
-  tok = (Tok){Fail};
+  tok = (Tok){Undecided};
+  int escape = 0;
+  
+  for (size_t len = 1; len < ctx->sz; len++) {
+    
+    if (!escape) {
+      
+      switch (ctx->buf[len]) {
+        
+        case '\\':
+        escape = 1;
+        continue;
+        
+        case '"':
+        break;
+        
+        default:
+        continue;
+        
+      }
+      
+    }
+    
+    else {
+      escape = 0;
+      continue;
+    }
+    
+    tok = (Tok){Success, len+1};
+    break;
+    
+  }
 
 });
 
