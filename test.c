@@ -61,10 +61,10 @@ void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
 
 int main(void) {
 
-  char buf[1024];
-  lexCtx ctx = {1024, 1024, buf, buf};
+  char buf[4096];
+  lexCtx ctx = {4096, 4096, buf, buf};
 
-  read(0, ctx.buf, 1024);
+  read(0, ctx.buf, 4096);
   lex(&ctx, print_tok);
 
   return 0;
