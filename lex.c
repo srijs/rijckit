@@ -4,19 +4,27 @@
 // The main design goals are as follows:
 //
 // 1. To provide a very readable implementation of a lexer function.
-// 2. To be useful in sequential workflows, as well as systems
-//    working with asynchronous IO and/or threads.
+// 2. To be useful in sequential work-flows, as well as systems
+//    working with asynchronous IO and / or threads.
 // 3. To be completely independent from any external libraries.
 // 4. To perform all data dependent computations as fast as possible
 //    and leave the rest to other software components.
-// 5. To maximize the mean throughput by optimizing the codepaths
+// 5. To maximize the mean throughput by optimizing the code-paths
 //    for small tokens.
-// 6. To use no heap space by utilising continuation-passing-style and
+// 6. To use no heap space by utilizing continuation-passing-style and
 //    performing allocations solely on the stack.
+
+// We include the `stdlib` header just for the `size_t` typedef.
 
 #include <stdlib.h>
 
+// Type-declarations and interfaces of this lexer are found in the
+// `lex.h` header file.
+
 #include "lex.h"
+
+// In order to optimize code-paths, we define two convenience macros
+// to give branch-prediction information to the compiler.
 
 #define likely(x)   (__builtin_expect(x, 1))
 #define unlikely(x) (__builtin_expect(x, 0))
@@ -24,9 +32,18 @@
 
 
 // ## Lexemes
-
+//
+// To provide good readability and understandability, the
+// functionality of the lexer as a whole is factored into its
+// individual lexemes, each of which is provided as a static function.
 
 // ### Framework Macro
+//
+// We abstract the common framework for these lexemes into a macro
+// that transforms the lexeme definition into a static function,
+// taking as arguments the context and continuation of the lexing
+// process and then passing the resulting type and token to the
+// latter.
 
 #define lexeme(name, type, ctx, tok, expr...) \
           static void name \
