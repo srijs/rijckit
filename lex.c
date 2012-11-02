@@ -1,3 +1,19 @@
+// ## Prologue
+//
+// This is a simple and general lexer function for c-like languages.
+// The main design goals are as follows:
+//
+// 1. To provide a very readable implementation of a lexer function.
+// 2. To be useful in sequential workflows, as well as systems
+//    working with asynchronous IO and/or threads.
+// 3. To be completely independent from any external libraries.
+// 4. To perform all data dependent computations as fast as possible
+//    and leave the rest to other software components.
+// 5. To maximize the mean throughput by optimizing the codepaths
+//    for small tokens.
+// 6. To use no heap space by utilising continuation-passing-style and
+//    performing allocations solely on the stack.
+
 #include <stdlib.h>
 
 #include "lex.h"

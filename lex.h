@@ -1,3 +1,9 @@
+// ## Prologue
+//
+// This is the interface to a simple and general lexer function for
+// c-like languages.
+// See the source file `lex.c` for more information.
+
 #ifndef NS
 #define NS(id) id
 #endif
