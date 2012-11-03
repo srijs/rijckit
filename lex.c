@@ -35,41 +35,31 @@
 //
 // To provide good readability and understandability, the
 // functionality of the lexer as a whole is factored into its
-// individual lexemes, each of which is provided as a static function.
-
-// ### Framework Macro
-//
-// We abstract the common framework for these lexemes into a macro
-// that transforms the lexeme definition into a static function,
-// taking as arguments the context and continuation of the lexing
-// process and then passing the resulting type and token to the
-// latter.
-
-#define lexeme(name, type, ctx, tok, expr...) \
-          static void name \
-          (Ctx *const ctx, const Cont ret) \
-          { Tok tok; return ret(ctx, type, ((expr), tok)); }
-                        
+// individual lexemes. Each of those is provided as a static function,
+// taking the current context of the lexing process as a parameter
+// and returning the matched token structure.
 
 // ### Lexeme: Number
 // Fail.
 
-lexeme (number, Number, ctx, tok, {
+static Tok number (Ctx *const ctx) {
 
-  tok = (Tok){Fail};
+  return (Tok){Fail};
 
-});
-
+}
 
 // ### Lexeme: Identifier
 // `identifier ::= ( A-Z | a-z | _ ) { ( A-z | a-z | 0-9 | _ ) }`
 //
-// An identifier is an _arbitrary long_ sequence of alphanumerics and
-// underscore characters.
-// Thus the length of the token is undecided, as long as we don't see
-// a terminating character (that can't be contained in an identifier).
+// An identifier is an _arbitrary long_ sequence of alphanumerics
+// and underscore characters.
 
-lexeme (identifier, Identifier, ctx, tok, {
+static Tok identifier (Ctx *const ctx) {
+  Tok tok;
+
+  // Thus the length of the token is undecided, as long as we don't
+  // see a terminating character (that can't be contained in an
+  // identifier).
 
   tok = (Tok){Undecided};
 
@@ -87,18 +77,22 @@ lexeme (identifier, Identifier, ctx, tok, {
 
   }
 
-});
+  return tok;
 
+};
 
 // ### Lexeme: Whitespace
 // `whitespace ::= ( Space | Tab | NL | CR ) { whitespace }`
 //
-// Whitespace is an _arbitrary long_ sequence of space, tab, new-line
-// and carriage-return characters.
-// Thus the length of the token is undecided, as long as we don't see
-// a terminating character (that can't be contained in whitespace).
+// Whitespace is an _arbitrary long_ sequence of space, tab,
+// new-line and carriage-return characters.
 
-lexeme (whitespace, Whitespace, ctx, tok, {
+static Tok whitespace (Ctx *const ctx) {
+  Tok tok;
+
+  // Thus the length of the token is undecided, as long as we don't
+  // see a terminating character (that can't be contained in
+  // whitespace).
 
   tok = (Tok){Undecided};
 
@@ -116,13 +110,15 @@ lexeme (whitespace, Whitespace, ctx, tok, {
 
   }
 
-});
+  return tok;
 
+}
 
 // ### Lexeme: String
 // Fail.
 
-lexeme (string, String, ctx, tok, {
+static Tok string (Ctx *const ctx) {
+  Tok tok;
 
   tok = (Tok){Undecided};
   int escape = 0;
@@ -157,8 +153,9 @@ lexeme (string, String, ctx, tok, {
     
   }
 
-});
+  return tok;
 
+}
 
 // ### Lexeme: Character
 // `character ::= S-Quote ( Esc-Seq | Char ) S-Quote`
@@ -166,7 +163,8 @@ lexeme (string, String, ctx, tok, {
 // A character literal is an ASCII-identifier between two single
 // quotes.
 
-lexeme (character, Character, ctx, tok, {
+static Tok character (Ctx *const ctx) {
+  Tok tok;
 
   // If the first character inside the quotes is not a backslash,
   // it is a simple literal with a single character between the
@@ -199,21 +197,25 @@ lexeme (character, Character, ctx, tok, {
     else tok = (Tok){Undecided};
   }
 
-});
+  return tok;
 
+}
 
 // ### Lexeme: Punctuation (short)
 
-lexeme (punctuation_short, Punctuation, ctx, tok, {
+static Tok punctuation_short (Ctx *const ctx) {
+  Tok tok;
 
   tok = (Tok){Success, 1};
 
-});
+  return tok;
 
+}
 
 // ### Lexeme: Punctuation (long)
 
-lexeme (punctuation_long, Punctuation, ctx, tok, {
+static Tok punctuation_long (Ctx *const ctx) {
+  Tok tok;
 
   if unlikely (ctx->sz == 1) tok = (Tok){Undecided};
 
@@ -318,15 +320,18 @@ lexeme (punctuation_long, Punctuation, ctx, tok, {
 
   }
 
-});
+  return tok;
+
+}
 
 
 
 // ## Routing
-// Based on the first character of the input buffer, we route the
-// tokenization process to a specific lexeme.
 
-void lex(Ctx *const ctx, const Cont ret) {
+void lex (Ctx *const ctx, const Cont ret) {
+
+  // Based on the first character of the input buffer, we route the
+  // tokenization process to a specific lexeme.
 
   switch (ctx->buf[0]) {
 
@@ -334,28 +339,28 @@ void lex(Ctx *const ctx, const Cont ret) {
     return ret(ctx, Undefined, (Tok){End});
 
     case '0'...'9':
-    return number(ctx, ret);
+    return ret(ctx, Number, number(ctx));
 
     case 'A'...'Z': case 'a'...'z':
     case '_':
-    return identifier(ctx, ret);
+    return ret(ctx, Identifier, identifier(ctx));
 
     case ' ': case '\t':
     case '\n': case '\r':
-    return whitespace(ctx, ret);
+    return ret(ctx, Whitespace, whitespace(ctx));
 
     case '"':
-    return string(ctx, ret);
+    return ret(ctx, String, string(ctx));
 
     case '\'':
-    return character(ctx, ret);
+    return ret(ctx, Character, character(ctx));
 
     case ',': case ';':
     case '(': case ')':
     case '[': case ']':
     case '{': case '}':
     case ':':
-    return punctuation_short(ctx, ret);
+    return ret(ctx, Punctuation, punctuation_short(ctx));
 
     case '!': case '%':
     case '<': case '>':
@@ -364,7 +369,7 @@ void lex(Ctx *const ctx, const Cont ret) {
     case '+': case '-':
     case '.': case '^':
     case '&': case '|':
-    return punctuation_long(ctx, ret);
+    return ret(ctx, Punctuation, punctuation_long(ctx));
 
     default:
     return ret(ctx, Undefined, (Tok){Fail});
