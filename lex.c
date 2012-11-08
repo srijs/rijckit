@@ -175,26 +175,20 @@ static Tok character (Ctx *const ctx) {
   // length three.
 
   if likely (ctx->buf[1] != '\\') {
-    if likely (ctx->sz >= 3) {
-      if likely (ctx->buf[2] == '\'') {
-        tok = (Tok){Success, 3};
-      }
-      else tok = (Tok){Fail};
+    if likely (ctx->buf[2] == '\'') {
+       tok = (Tok){Success, 3};
     }
-    else tok = (Tok){Undecided};
+    else tok = (Tok){Fail};
   }
 
   // Otherwise, the literal is more complex with a character escape
   // sequence between the quotes.
 
   else {
-    if likely (ctx->sz >= 4) {
-      if likely (ctx->buf[3] == '\'') {
-        tok = (Tok){Success, 4};
-      }
-      else tok = (Tok){Fail};
+    if likely (ctx->buf[3] == '\'') {
+      tok = (Tok){Success, 4};
     }
-    else tok = (Tok){Undecided};
+    else tok = (Tok){Fail};
   }
 
   return tok;
@@ -217,106 +211,97 @@ static Tok punctuation_short (Ctx *const ctx) {
 static Tok punctuation_long (Ctx *const ctx) {
   Tok tok;
 
-  if unlikely (ctx->sz == 1) tok = (Tok){Undecided};
+  const char suc = ctx->buf[1];
 
-  else {
+  switch (ctx->buf[0]) {
 
-    const char suc = ctx->buf[1];
+    // In the simple cases, just an equal-sign may follow...
 
-    switch (ctx->buf[0]) {
+    case '!': case '^':
+    case '=': case '*':
+    case '%':
+    tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
+    break;
 
-      // In the simple cases, just an equal-sign may follow...
+    // Is double-and or and-equals?
 
-      case '!': case '^':
-      case '=': case '*':
-      case '%':
-      tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
-      break;
+    case '&':
+    tok = (Tok){Success, unlikely (suc == '&'
+                                || suc == '=') ? 2 : 1};
+    break;
 
-      // Is double-and or and-equals?
+    // Is double-or or or-equals?
 
-      case '&':
-      tok = (Tok){Success, unlikely (suc == '&'
-                                  || suc == '=') ? 2 : 1};
-      break;
+    case '|':
+    tok = (Tok){Success, unlikely (suc == '|'
+                                || suc == '=') ? 2 : 1};
+    break;
 
-      // Is double-or or or-equals?
+    // Is three-way-conditional?
 
-      case '|':
-      tok = (Tok){Success, unlikely (suc == '|'
-                                  || suc == '=') ? 2 : 1};
-      break;
+    case '?':
+    tok = (Tok){Success, unlikely (suc == ':') ? 2 : 1};
+    break;
 
-      // Is three-way-conditional?
+    // Is double-plus or plus-equals?
 
-      case '?':
-      tok = (Tok){Success, unlikely (suc == ':') ? 2 : 1};
-      break;
+    case '+':
+    tok = (Tok){Success, unlikely (suc == '+'
+                                || suc == '=') ? 2 : 1};
+    break;
 
-      // Is double-plus or plus-equals?
+    // Is double-minus, arrow, or minus-equals?
 
-      case '+':
-      tok = (Tok){Success, unlikely (suc == '+'
-                                  || suc == '=') ? 2 : 1};
-      break;
+    case '-':
+    tok = (Tok){Success, unlikely (suc == '-'
+                                || suc == '>'
+                                || suc == '=') ? 2 : 1};
+    break;
 
-      // Is double-minus, arrow, or minus-equals?
+    // Is double-left-arrow or less-or-equal?
 
-      case '-':
-      tok = (Tok){Success, unlikely (suc == '-'
-                                  || suc == '>'
-                                  || suc == '=') ? 2 : 1};
-      break;
+    case '<':
+    tok = (Tok){Success, unlikely (suc == '<'
+                                || suc == '=') ? 2 : 1};
+    break;
 
-      // Is double-left-arrow or less-or-equal?
+    // Is double-right-arrow or greater-or-equal?
 
-      case '<':
-      tok = (Tok){Success, unlikely (suc == '<'
-                                  || suc == '=') ? 2 : 1};
-      break;
+    case '>':
+    tok = (Tok){Success, unlikely (suc == '>'
+                                || suc == '=') ? 2 : 1};
+    break;
 
-      // Is double-right-arrow or greater-or-equal?
+    // Is ellipsis or dot?
 
-      case '>':
-      tok = (Tok){Success, unlikely (suc == '>'
-                                  || suc == '=') ? 2 : 1};
-      break;
-
-      // Is ellipsis or dot?
-
-      case '.':
-      if unlikely (suc == '.') {
-        if likely (ctx->sz >= 3)
-             tok = (Tok){Success,
-                         likely (ctx->buf[2] == '.') ? 3 : 1};
-        else tok = (Tok){Undecided};
-      }
-      else tok = (Tok){Success, 1};
-      break;
-
-      // Is comment or divide-equals?
-
-      case '/':
-      if unlikely (suc == '/') {
-        for (size_t len = 2; len < ctx->sz; len++) {
-          if unlikely (ctx->buf[len] == '\n'
-                    || ctx->buf[len] == '\r') {
-            tok = (Tok){Success, len};
-            goto end;
-          }
-        }
-        tok = (Tok){Undecided};
-      }
-      else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
-      end: break;
-      
-      // Since we have handled all possible cases, we can declare the
-      // following codepath as undefined.
-      
-      default:
-      __builtin_unreachable();
-
+    case '.':
+    if unlikely (suc == '.') {
+      tok = (Tok){Success, likely (ctx->buf[2] == '.') ? 3 : 1};
     }
+    else tok = (Tok){Success, 1};
+    break;
+
+    // Is comment or divide-equals?
+
+    case '/':
+    if unlikely (suc == '/') {
+      for (size_t len = 2; len < ctx->sz; len++) {
+        if unlikely (ctx->buf[len] == '\n'
+                  || ctx->buf[len] == '\r') {
+          tok = (Tok){Success, len};
+          goto end;
+        }
+      }
+      tok = (Tok){Undecided};
+    }
+    else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
+    end: break;
+    
+    // Since we have handled all possible cases, we can declare the
+    // following codepath as undefined.
+    
+    default:
+    __builtin_unreachable();
 
   }
 
