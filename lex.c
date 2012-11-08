@@ -332,6 +332,12 @@ void lex (Ctx *const ctx, const Cont ret) {
 
   // Based on the first character of the input buffer, we route the
   // tokenization process to a specific lexeme.
+  // We require that the length of our buffer is at least four
+  // characters, else the behaviour of this function is undefined.
+
+  if (ctx->sz < 4) {
+    __builtin_unreachable();
+  }
 
   switch (ctx->buf[0]) {
 

@@ -18,34 +18,37 @@ void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
     [lexPunctuation] = "Punctuation"
   };
 
-  switch (tok.state) {
+  size_t sub = 0;
 
-    case lexSuccess:
-    if (tok.len < ctx->sz) {
-      ctx->sz  = ctx->sz - tok.len;
-      ctx->buf = &ctx->buf[tok.len];
-      return lex(ctx, print_tok);
-    }
-    return exit(0);
+  switch (tok.state) {
 
     case lexFail:
     printf("Fail, Tok: %s, Char: %u\n", tok_str[type], ctx->buf[0]);
     return exit(0);
 
+    case lexSuccess:
+    if (ctx->sz - tok.len >= 4) {
+      ctx->sz  = ctx->sz - tok.len;
+      ctx->buf = &ctx->buf[tok.len];
+      return lex(ctx, print_tok);
+    }
+    sub = tok.len;
+
     case lexUndecided:
-    printf("Undecided, Tok: %s\n", tok_str[type]);
-    if (ctx->sz < ctx->back_sz) {
-      memmove(ctx->back_buf, ctx->buf, ctx->sz);
-      ssize_t rd = read(0, &ctx->back_buf[ctx->sz], ctx->back_sz - ctx->sz);
-      if (rd > 0) {
-        ctx->sz  = rd;
+    if (ctx->sz - sub < ctx->back_sz) {
+      memmove(ctx->back_buf, ctx->buf, ctx->sz - sub);
+      ssize_t rd = read(0, &ctx->back_buf[ctx->sz - sub], ctx->back_sz - (ctx->sz - sub));
+      if ((ctx->sz - sub) + rd >= 4) {
+        ctx->sz  = (ctx->sz - sub) + rd;
         ctx->buf = ctx->back_buf;
         return lex(ctx, print_tok);
       }
-      else if (rd == 0) {
-        ctx->sz = 1;
+      else {
+        for (int i = 0; i < (4 - (ctx->sz - sub + rd)); i++) {
+          ctx->back_buf[ctx->sz - sub + rd + i] = '\0';
+        }
         ctx->buf = ctx->back_buf;
-        ctx->buf[0] = '\0';
+        ctx->sz = (ctx->sz - sub) + 4;
         return lex(ctx, print_tok);
       }
     }
