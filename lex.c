@@ -16,7 +16,7 @@
 
 // We include the `stdlib` header just for the `size_t` typedef.
 
-#include <stdlib.h>
+#include <stddef.h>
 
 // Type-declarations and interfaces of this lexer are found in the
 // `lex.h` header file.
