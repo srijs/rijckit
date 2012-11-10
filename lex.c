@@ -122,35 +122,35 @@ static Tok string (Ctx *const ctx) {
 
   tok = (Tok){Undecided};
   int escape = 0;
-  
+
   for (size_t len = 1; len < ctx->sz; len++) {
-    
+
     if (!escape) {
-      
+
       switch (ctx->buf[len]) {
-        
+
         case '\\':
         escape = 1;
         continue;
-        
+
         case '"':
         break;
-        
+
         default:
         continue;
-        
+
       }
-      
+
     }
-    
+
     else {
       escape = 0;
       continue;
     }
-    
+
     tok = (Tok){Success, len+1};
     break;
-    
+
   }
 
   return tok;
@@ -296,10 +296,10 @@ static Tok punctuation_long (Ctx *const ctx) {
     }
     else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
     end: break;
-    
+
     // Since we have handled all possible cases, we can declare the
     // following codepath as undefined.
-    
+
     default:
     __builtin_unreachable();
 
