@@ -96,6 +96,8 @@ static Tok whitespace (Ctx *const ctx) {
 
   tok = (Tok){Undecided};
 
+  #ifndef FAST
+
   for (size_t len = 1; len < ctx->sz; len++) {
 
     switch (ctx->buf[len]) {
@@ -109,6 +111,30 @@ static Tok whitespace (Ctx *const ctx) {
     break;
 
   }
+
+  #else
+
+  if (((ctx->buf[1] == ' ')  | (ctx->buf[1] == '\t')
+     | (ctx->buf[1] == '\n') | (ctx->buf[1] == '\r')) != 0)
+    return (Tok){Success, 1};
+
+  if (((ctx->buf[2] == ' ')  | (ctx->buf[2] == '\t')
+     | (ctx->buf[2] == '\n') | (ctx->buf[2] == '\r')) != 0)
+    return (Tok){Success, 2};
+
+  if (((ctx->buf[3] == ' ')  | (ctx->buf[3] == '\t')
+     | (ctx->buf[3] == '\n') | (ctx->buf[3] == '\r')) != 0)
+    return (Tok){Success, 3};
+
+  for (size_t len = 4; len < ctx->sz; len++) {
+
+    if (((ctx->buf[len] == ' ')  | (ctx->buf[len] == '\t')
+       | (ctx->buf[len] == '\n') | (ctx->buf[len] == '\r')) != 0)
+      return (Tok){Success, len};
+
+  }
+
+  #endif
 
   return tok;
 
