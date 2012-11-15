@@ -68,9 +68,8 @@ static bool is_whitespace (unsigned char c) {
   return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
 
-static Tok identifier_or_whitespace (bool ident, Ctx *const ctx) {
-
-  bool (*check)(unsigned char) = ident ? is_alnum : is_whitespace;
+static Tok identifier_or_whitespace (bool (*check)(unsigned char),
+                                     Ctx *const ctx) {
 
   if (check(ctx->buf[1]) == 0) {
     return (Tok){Success, 1};
@@ -280,11 +279,11 @@ void lex (Ctx *const ctx, const Cont ret) {
 
     case 'A'...'Z': case 'a'...'z':
     case '_':
-    return ret(ctx, Identifier, identifier_or_whitespace(true, ctx));
+    return ret(ctx, Identifier, identifier_or_whitespace(is_alnum, ctx));
 
     case ' ': case '\t':
     case '\n': case '\r':
-    return ret(ctx, Whitespace, identifier_or_whitespace(false, ctx));
+    return ret(ctx, Whitespace, identifier_or_whitespace(is_whitespace, ctx));
 
     case '"': case '\'':
     return ret(ctx, String, string_or_character(ctx));
