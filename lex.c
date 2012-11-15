@@ -289,8 +289,10 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '\n': case '\r':
     return ret(ctx, Whitespace, identifier_or_whitespace(is_whitespace, ctx));
 
-    case '"': case '\'':
+    case '"':
     return ret(ctx, String, string_or_character(ctx));
+    case '\'':
+    return ret(ctx, Character, string_or_character(ctx));
 
     case '!': case '%':
     case '<': case '>':
