@@ -32,7 +32,7 @@
 
 // ## Generic Parsing Functions
 
-static Tok many_of(bool (*check)(char), Ctx *const ctx) {
+static Tok many_of(bool (*check)(unsigned char), Ctx *const ctx) {
 
   size_t off = 1;
 
@@ -89,7 +89,7 @@ static Tok number (Ctx *const ctx) {
 // An identifier is an _arbitrary long_ sequence of alphanumerics
 // and underscore characters.
 
-static bool is_alnum (char c) {
+static bool is_alnum (unsigned char c) {
   switch (c) {
     case 'A'...'Z': case 'a'...'z':
     case '0'...'9': case '_':
@@ -110,7 +110,7 @@ static Tok identifier (Ctx *const ctx) {
 // Whitespace is an _arbitrary long_ sequence of space, tab,
 // new-line and carriage-return characters.
 
-static bool is_whitespace (char c) {
+static bool is_whitespace (unsigned char c) {
   return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
 
