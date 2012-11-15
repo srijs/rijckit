@@ -90,13 +90,8 @@ static Tok number (Ctx *const ctx) {
 // and underscore characters.
 
 static bool is_alnum (unsigned char c) {
-  switch (c) {
-    case 'A'...'Z': case 'a'...'z':
-    case '0'...'9': case '_':
-      return true;
-    default:
-      return false;
-  }
+  return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'Z'))
+        | ((c >= '0') & (c <= '9')) | (c == '_'));
 }
 
 static Tok identifier (Ctx *const ctx) {
