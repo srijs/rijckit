@@ -174,14 +174,14 @@ static inline Tok punctuation (Ctx *const ctx) {
 
     case '&':
     tok = (Tok){Success, unlikely (suc == '&'
-                                || suc == '=') ? 2 : 1};
+                                 | suc == '=') ? 2 : 1};
     break;
 
     // Is double-or or or-equals?
 
     case '|':
     tok = (Tok){Success, unlikely (suc == '|'
-                                || suc == '=') ? 2 : 1};
+                                 | suc == '=') ? 2 : 1};
     break;
 
     // Is three-way-conditional?
@@ -194,29 +194,29 @@ static inline Tok punctuation (Ctx *const ctx) {
 
     case '+':
     tok = (Tok){Success, unlikely (suc == '+'
-                                || suc == '=') ? 2 : 1};
+                                 | suc == '=') ? 2 : 1};
     break;
 
     // Is double-minus, arrow, or minus-equals?
 
     case '-':
     tok = (Tok){Success, unlikely (suc == '-'
-                                || suc == '>'
-                                || suc == '=') ? 2 : 1};
+                                 | suc == '>'
+                                 | suc == '=') ? 2 : 1};
     break;
 
     // Is double-left-arrow or less-or-equal?
 
     case '<':
     tok = (Tok){Success, unlikely (suc == '<'
-                                || suc == '=') ? 2 : 1};
+                                 | suc == '=') ? 2 : 1};
     break;
 
     // Is double-right-arrow or greater-or-equal?
 
     case '>':
     tok = (Tok){Success, unlikely (suc == '>'
-                                || suc == '=') ? 2 : 1};
+                                 | suc == '=') ? 2 : 1};
     break;
 
     // Is ellipsis or dot?
@@ -234,7 +234,7 @@ static inline Tok punctuation (Ctx *const ctx) {
     if unlikely (suc == '/') {
       for (len = 2; len < ctx->sz; len++) {
         if unlikely (ctx->buf[len] == '\n'
-                  || ctx->buf[len] == '\r') {
+                   | ctx->buf[len] == '\r') {
           tok = (Tok){Success, len};
           goto end;
         }
