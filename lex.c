@@ -152,20 +152,9 @@ static Tok string_or_character (Ctx *const ctx) {
 
 }
 
-// ### Lexeme: Punctuation (short)
+// ### Lexeme: Punctuation
 
-static Tok punctuation_short (Ctx *const ctx) {
-  Tok tok;
-
-  tok = (Tok){Success, 1};
-
-  return tok;
-
-}
-
-// ### Lexeme: Punctuation (long)
-
-static Tok punctuation_long (Ctx *const ctx) {
+static Tok punctuation (Ctx *const ctx) {
   Tok tok;
 
   const char suc = ctx->buf[1];
@@ -254,6 +243,14 @@ static Tok punctuation_long (Ctx *const ctx) {
     else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
     end: break;
 
+    case ',': case ';':
+    case '(': case ')':
+    case '[': case ']':
+    case '{': case '}':
+    case ':':
+    tok = (Tok){Success, 1};
+    break;
+
     // Since we have handled all possible cases, we can declare the
     // following codepath as undefined.
 
@@ -300,13 +297,6 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '"': case '\'':
     return ret(ctx, String, string_or_character(ctx));
 
-    case ',': case ';':
-    case '(': case ')':
-    case '[': case ']':
-    case '{': case '}':
-    case ':':
-    return ret(ctx, Punctuation, punctuation_short(ctx));
-
     case '!': case '%':
     case '<': case '>':
     case '=': case '?':
@@ -314,7 +304,12 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '+': case '-':
     case '.': case '^':
     case '&': case '|':
-    return ret(ctx, Punctuation, punctuation_long(ctx));
+    case ',': case ';':
+    case '(': case ')':
+    case '[': case ']':
+    case '{': case '}':
+    case ':':
+    return ret(ctx, Punctuation, punctuation(ctx));
 
     default:
     return ret(ctx, Undefined, (Tok){Fail});
