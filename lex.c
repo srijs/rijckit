@@ -39,11 +39,17 @@
 // and returning the matched token structure.
 
 // ### Lexeme: Number
-// Fail.
+// Stub.
 
 static Tok number (Ctx *const ctx) {
 
-  return (Tok){Fail};
+  size_t len;
+  for (len = 1; len < ctx->sz; len++) {
+    if (ctx->buf[len] < '0' || ctx->buf[len] > '9') {
+      return (Tok){Success, len};
+    }
+  }
+  return (Tok){Undecided};
 
 }
 
