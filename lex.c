@@ -105,11 +105,13 @@ static Tok whitespace (Ctx *const ctx) {
 }
 
 // ### Lexeme: String & Character
+//
 // `string    ::= Dbl-Quote ( Char-Seq ) Dbl-Quote`
+//
 // `character ::= S-Quote   ( Char-Seq ) S-Quote`
 //
 // A string literal is a string of ASCII-identifier between
-// two single quotes.
+// two double quotes.
 //
 // A character literal is a string of ASCII-identifier between
 // two single quotes.
