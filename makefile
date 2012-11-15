@@ -2,10 +2,12 @@
 
 test: lex.h lex.c test.c
 	$(CC) -std=c99 -Os lex.c test.c -o test
-	
+
 verify: lex.h lex.c
-	$(CC) -std=c99 -Os lex.c -S -o .asm.s
-	cat .asm.s | grep call
+	$(CC) -std=c99 -O3 lex.c -S -o .asm.s
+	cat .asm.s | grep call | wc -l
+	cat .asm.s | grep j | wc -l
+	rm .asm.s
 
 sloc:
 	cat lex.c | grep . | grep -v "//" | wc -l
