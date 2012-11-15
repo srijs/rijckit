@@ -41,7 +41,7 @@
 // ### Lexeme: Number
 // Stub.
 
-static Tok number (Ctx *const ctx) {
+static inline Tok number (Ctx *const ctx) {
 
   size_t len;
   for (len = 1; len < ctx->sz; len++) {
@@ -65,16 +65,16 @@ static Tok number (Ctx *const ctx) {
 // Whitespace is an _arbitrary long_ sequence of space, tab,
 // new-line and carriage-return characters.
 
-static bool is_alnum (char c) {
+static inline bool is_alnum (char c) {
   return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'Z'))
         | ((c >= '0') & (c <= '9')) | (c == '_'));
 }
 
-static bool is_whitespace (char c) {
+static inline bool is_whitespace (char c) {
   return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
 
-static Tok identifier_or_whitespace (bool (*check)(char),
+static inline Tok identifier_or_whitespace (bool (*check)(char),
                                      Ctx *const ctx) {
 
   size_t len;
@@ -113,7 +113,7 @@ static Tok identifier_or_whitespace (bool (*check)(char),
 // A character literal is a string of ASCII-identifier between
 // two single quotes.
 
-static Tok string_or_character (Ctx *const ctx) {
+static inline Tok string_or_character (Ctx *const ctx) {
 
   size_t len;
   bool escape = false;
@@ -154,7 +154,7 @@ static Tok string_or_character (Ctx *const ctx) {
 
 // ### Lexeme: Punctuation
 
-static Tok punctuation (Ctx *const ctx) {
+static inline Tok punctuation (Ctx *const ctx) {
 
   Tok tok;
   size_t len;
