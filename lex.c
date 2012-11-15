@@ -59,6 +59,26 @@ static Tok many_of (bool (*check)(unsigned char), Ctx *const ctx) {
 
 static Tok quoted_by (unsigned char quote, Ctx *const ctx) {
 
+  if (ctx->buf[1] == quote) {
+    return (Tok){Success, 2};
+  }
+
+  if (ctx->buf[2] == quote &&
+      ctx->buf[1] != '\\') {
+    return (Tok){Success, 3};
+  }
+
+  if (ctx->buf[3] == quote &&
+      ctx->buf[2] != '\\') {
+    return (Tok){Success, 4};
+  }
+
+  if (ctx->buf[3] == quote &&
+      ctx->buf[2] == '\\'  &&
+      ctx->buf[1] == '\\') {
+    return (Tok){Success, 4};
+  }
+
   bool escape = false;
 
   for (size_t len = 1; len < ctx->sz; len++) {
@@ -95,7 +115,7 @@ static Tok number (Ctx *const ctx) {
 }
 
 // ### Lexeme: Identifier
-// `identifier ::= ( A-Z | a-z | _ ) { ( A-z | a-z | 0-9 | _ ) }`
+//`identifier ::= ( A-Z | a-z | _ ) { ( A-z | a-z | 0-9 | _ ) }`
 //
 // An identifier is an _arbitrary long_ sequence of alphanumerics
 // and underscore characters.
