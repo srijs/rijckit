@@ -101,7 +101,7 @@ static bool is_alnum (char c) {
 
 static Tok identifier (Ctx *const ctx) {
   return many_of(is_alnum, ctx);
-};
+}
 
 
 // ### Lexeme: Whitespace
@@ -126,16 +126,16 @@ static Tok string (Ctx *const ctx) {
   Tok tok;
 
   tok = (Tok){Undecided};
-  int escape = 0;
+  int escape = false;
 
   for (size_t len = 1; len < ctx->sz; len++) {
 
-    if (!escape) {
+    if (escape == false) {
 
       switch (ctx->buf[len]) {
 
         case '\\':
-        escape = 1;
+        escape = true;
         continue;
 
         case '"':
