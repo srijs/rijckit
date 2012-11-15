@@ -25,14 +25,14 @@
 // In order to optimize code-paths, we define two convenience macros
 // to give branch-prediction information to the compiler.
 
-#define likely(x)   (__builtin_expect(x, 1))
-#define unlikely(x) (__builtin_expect(x, 0))
+#define likely(x)   (__builtin_expect(x, true))
+#define unlikely(x) (__builtin_expect(x, false))
 
 
 
 // ## Generic Parsing Functions
 
-static Tok many_of(_Bool (*check)(char), Ctx *const ctx) {
+static Tok many_of(bool (*check)(char), Ctx *const ctx) {
 
   size_t off = 1;
 
