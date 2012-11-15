@@ -30,9 +30,47 @@
 
 
 
-// ## Generic Parsing Functions
+// ## Lexemes
+//
+// To provide good readability and understandability, the
+// functionality of the lexer as a whole is factored into its
+// individual lexemes. Each of those is provided as a static function,
+// taking the current context of the lexing process as a parameter
+// and returning the matched token structure.
 
-static Tok many_of (bool (*check)(unsigned char), Ctx *const ctx) {
+// ### Lexeme: Number
+// Fail.
+
+static Tok number (Ctx *const ctx) {
+
+  return (Tok){Fail};
+
+}
+
+// ### Lexeme: Identifier & Whitespace
+//
+// `identifier ::= ( A-Z | a-z | _ ) { ( A-z | a-z | 0-9 | _ ) }`
+//
+// `whitespace ::= ( Space | Tab | NL | CR ) { whitespace }`
+//
+// An identifier is an _arbitrary long_ sequence of alphanumerics
+// and underscore characters.
+//
+// Whitespace is an _arbitrary long_ sequence of space, tab,
+// new-line and carriage-return characters.
+
+static bool is_alnum (unsigned char c) {
+  return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'Z'))
+        | ((c >= '0') & (c <= '9')) | (c == '_'));
+}
+
+static bool is_whitespace (unsigned char c) {
+  return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
+}
+
+static Tok identifier_or_whitespace (bool ident, Ctx *const ctx) {
+
+  bool (*check)(unsigned char) = ident ? is_alnum : is_whitespace;
 
   if (check(ctx->buf[1]) == 0) {
     return (Tok){Success, 1};
@@ -54,54 +92,6 @@ static Tok many_of (bool (*check)(unsigned char), Ctx *const ctx) {
 
   return (Tok){Undecided};
 
-}
-
-
-
-// ## Lexemes
-//
-// To provide good readability and understandability, the
-// functionality of the lexer as a whole is factored into its
-// individual lexemes. Each of those is provided as a static function,
-// taking the current context of the lexing process as a parameter
-// and returning the matched token structure.
-
-// ### Lexeme: Number
-// Fail.
-
-static Tok number (Ctx *const ctx) {
-
-  return (Tok){Fail};
-
-}
-
-// ### Lexeme: Identifier
-//`identifier ::= ( A-Z | a-z | _ ) { ( A-z | a-z | 0-9 | _ ) }`
-//
-// An identifier is an _arbitrary long_ sequence of alphanumerics
-// and underscore characters.
-
-static bool is_alnum (unsigned char c) {
-  return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'Z'))
-        | ((c >= '0') & (c <= '9')) | (c == '_'));
-}
-
-static Tok identifier (Ctx *const ctx) {
-  return many_of(is_alnum, ctx);
-}
-
-// ### Lexeme: Whitespace
-// `whitespace ::= ( Space | Tab | NL | CR ) { whitespace }`
-//
-// Whitespace is an _arbitrary long_ sequence of space, tab,
-// new-line and carriage-return characters.
-
-static bool is_whitespace (unsigned char c) {
-  return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
-}
-
-static Tok whitespace (Ctx *const ctx) {
-  return many_of(is_whitespace, ctx);
 }
 
 // ### Lexeme: String & Character
@@ -290,11 +280,11 @@ void lex (Ctx *const ctx, const Cont ret) {
 
     case 'A'...'Z': case 'a'...'z':
     case '_':
-    return ret(ctx, Identifier, identifier(ctx));
+    return ret(ctx, Identifier, identifier_or_whitespace(true, ctx));
 
     case ' ': case '\t':
     case '\n': case '\r':
-    return ret(ctx, Whitespace, whitespace(ctx));
+    return ret(ctx, Whitespace, identifier_or_whitespace(false, ctx));
 
     case '"': case '\'':
     return ret(ctx, String, string_or_character(ctx));
