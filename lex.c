@@ -59,16 +59,16 @@ static Tok number (Ctx *const ctx) {
 // Whitespace is an _arbitrary long_ sequence of space, tab,
 // new-line and carriage-return characters.
 
-static bool is_alnum (unsigned char c) {
+static bool is_alnum (char c) {
   return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'Z'))
         | ((c >= '0') & (c <= '9')) | (c == '_'));
 }
 
-static bool is_whitespace (unsigned char c) {
+static bool is_whitespace (char c) {
   return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
 
-static Tok identifier_or_whitespace (bool (*check)(unsigned char),
+static Tok identifier_or_whitespace (bool (*check)(char),
                                      Ctx *const ctx) {
 
   if (check(ctx->buf[1]) == 0) {
