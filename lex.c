@@ -14,9 +14,8 @@
 // 6. To use no heap space by utilizing continuation-passing-style and
 //    performing allocations solely on the stack.
 
-// We include the `stdlib` header just for the `size_t` typedef.
-
 #include <stddef.h>
+#include <stdbool.h>
 
 // Type-declarations and interfaces of this lexer are found in the
 // `lex.h` header file.
@@ -28,6 +27,42 @@
 
 #define likely(x)   (__builtin_expect(x, 1))
 #define unlikely(x) (__builtin_expect(x, 0))
+
+
+
+// ## Generic Parsing Functions
+
+static Tok many_of(_Bool (*check)(char), Ctx *const ctx) {
+
+  size_t off = 1;
+
+  #ifdef FAST
+
+  if (check(ctx->buf[1]) == 0) {
+    return (Tok){Success, 1};
+  }
+
+  if (check(ctx->buf[2]) == 0) {
+    return (Tok){Success, 2};
+  }
+
+  if (check(ctx->buf[3]) == 0) {
+    return (Tok){Success, 3};
+  }
+
+  off = 4;
+
+  #endif
+
+  for (size_t len = off; len < ctx->sz; len++) {
+    if (check(ctx->buf[len]) == 0) {
+      return (Tok){Success, len};
+    }
+  }
+
+  return (Tok){Undecided};
+
+}
 
 
 
@@ -54,32 +89,20 @@ static Tok number (Ctx *const ctx) {
 // An identifier is an _arbitrary long_ sequence of alphanumerics
 // and underscore characters.
 
-static Tok identifier (Ctx *const ctx) {
-  Tok tok;
-
-  // Thus the length of the token is undecided, as long as we don't
-  // see a terminating character (that can't be contained in an
-  // identifier).
-
-  tok = (Tok){Undecided};
-
-  for (size_t len = 1; len < ctx->sz; len++) {
-
-    switch (ctx->buf[len]) {
-      case 'A'...'Z': case 'a'...'z':
-      case '0'...'9': case '_': {
-        continue;
-      }
-    }
-
-    tok = (Tok){Success, len};
-    break;
-
+static bool is_alnum (char c) {
+  switch (c) {
+    case 'A'...'Z': case 'a'...'z':
+    case '0'...'9': case '_':
+      return true;
+    default:
+      return false;
   }
+}
 
-  return tok;
-
+static Tok identifier (Ctx *const ctx) {
+  return many_of(is_alnum, ctx);
 };
+
 
 // ### Lexeme: Whitespace
 // `whitespace ::= ( Space | Tab | NL | CR ) { whitespace }`
@@ -87,58 +110,14 @@ static Tok identifier (Ctx *const ctx) {
 // Whitespace is an _arbitrary long_ sequence of space, tab,
 // new-line and carriage-return characters.
 
-static Tok whitespace (Ctx *const ctx) {
-  Tok tok;
-
-  // Thus the length of the token is undecided, as long as we don't
-  // see a terminating character (that can't be contained in
-  // whitespace).
-
-  tok = (Tok){Undecided};
-
-  #ifndef FAST
-
-  for (size_t len = 1; len < ctx->sz; len++) {
-
-    switch (ctx->buf[len]) {
-      case ' ': case '\t':
-      case '\n': case '\r': {
-        continue;
-      }
-    }
-
-    tok = (Tok){Success, len};
-    break;
-
-  }
-
-  #else
-
-  if (((ctx->buf[1] == ' ')  | (ctx->buf[1] == '\t')
-     | (ctx->buf[1] == '\n') | (ctx->buf[1] == '\r')) == 0)
-    return (Tok){Success, 1};
-
-  if (((ctx->buf[2] == ' ')  | (ctx->buf[2] == '\t')
-     | (ctx->buf[2] == '\n') | (ctx->buf[2] == '\r')) == 0)
-    return (Tok){Success, 2};
-
-  if (((ctx->buf[3] == ' ')  | (ctx->buf[3] == '\t')
-     | (ctx->buf[3] == '\n') | (ctx->buf[3] == '\r')) == 0)
-    return (Tok){Success, 3};
-
-  for (size_t len = 4; len < ctx->sz; len++) {
-
-    if (((ctx->buf[len] == ' ')  | (ctx->buf[len] == '\t')
-       | (ctx->buf[len] == '\n') | (ctx->buf[len] == '\r')) == 0)
-      return (Tok){Success, len};
-
-  }
-
-  #endif
-
-  return tok;
-
+static bool is_whitespace (char c) {
+  return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
+
+static Tok whitespace (Ctx *const ctx) {
+  return many_of(is_whitespace, ctx);
+}
+
 
 // ### Lexeme: String
 // Fail.
