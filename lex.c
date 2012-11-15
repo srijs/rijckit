@@ -57,6 +57,25 @@ static Tok many_of (bool (*check)(unsigned char), Ctx *const ctx) {
 }
 
 
+static Tok quoted_by (unsigned char quote, Ctx *const ctx) {
+
+  bool escape = false;
+
+  for (size_t len = 1; len < ctx->sz; len++) {
+
+    if (escape == false) {
+      if (ctx->buf[len] == quote) return (Tok){Success, len + 1};
+      if (ctx->buf[len] == '\\')  escape = true;
+    }
+    else escape = false;
+
+  }
+
+  return (Tok){Undecided};
+
+}
+
+
 
 // ## Lexemes
 //
@@ -105,84 +124,23 @@ static Tok whitespace (Ctx *const ctx) {
 }
 
 // ### Lexeme: String
-// Fail.
+// `string ::= Dbl-Quote ( Char-Seq ) Dbl-Quote`
+//
+// A string literal is a string of ASCII-identifier between
+// two single quotes.
 
 static Tok string (Ctx *const ctx) {
-  Tok tok;
-
-  tok = (Tok){Undecided};
-  int escape = false;
-
-  for (size_t len = 1; len < ctx->sz; len++) {
-
-    if (escape == false) {
-
-      switch (ctx->buf[len]) {
-
-        case '\\':
-        escape = true;
-        continue;
-
-        case '"':
-        break;
-
-        default:
-        continue;
-
-      }
-
-    }
-
-    else {
-      escape = 0;
-      continue;
-    }
-
-    tok = (Tok){Success, len+1};
-    break;
-
-  }
-
-  return tok;
-
+  return quoted_by('"', ctx);
 }
 
 // ### Lexeme: Character
-// `character ::= S-Quote ( Esc-Seq | Char ) S-Quote`
+// `character ::= S-Quote ( Char-Seq ) S-Quote`
 //
-// A character literal is an ASCII-identifier between two single
-// quotes.
+// A character literal is a string of ASCII-identifier between
+// two single quotes.
 
 static Tok character (Ctx *const ctx) {
-  Tok tok;
-
-  // If the first character inside the quotes is not a backslash,
-  // it is a simple literal with a single character between the
-  // quotes.
-  // In this case, when the current buffer holds less than three
-  // characters, the token is undecided. If the third character is a
-  // terminating single quote, the tokenization is successful with
-  // length three.
-
-  if likely (ctx->buf[1] != '\\') {
-    if likely (ctx->buf[2] == '\'') {
-       tok = (Tok){Success, 3};
-    }
-    else tok = (Tok){Fail};
-  }
-
-  // Otherwise, the literal is more complex with a character escape
-  // sequence between the quotes.
-
-  else {
-    if likely (ctx->buf[3] == '\'') {
-      tok = (Tok){Success, 4};
-    }
-    else tok = (Tok){Fail};
-  }
-
-  return tok;
-
+  return quoted_by('\'', ctx);
 }
 
 // ### Lexeme: Punctuation (short)
