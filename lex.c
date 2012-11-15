@@ -57,45 +57,6 @@ static Tok many_of (bool (*check)(unsigned char), Ctx *const ctx) {
 }
 
 
-static Tok quoted_by (unsigned char quote, Ctx *const ctx) {
-
-  if (ctx->buf[1] == quote) {
-    return (Tok){Success, 2};
-  }
-
-  if (ctx->buf[2] == quote &&
-      ctx->buf[1] != '\\') {
-    return (Tok){Success, 3};
-  }
-
-  if (ctx->buf[3] == quote &&
-      ctx->buf[2] != '\\') {
-    return (Tok){Success, 4};
-  }
-
-  if (ctx->buf[3] == quote &&
-      ctx->buf[2] == '\\'  &&
-      ctx->buf[1] == '\\') {
-    return (Tok){Success, 4};
-  }
-
-  bool escape = false;
-
-  for (size_t len = 1; len < ctx->sz; len++) {
-
-    if (escape == false) {
-      if (ctx->buf[len] == quote) return (Tok){Success, len + 1};
-      if (ctx->buf[len] == '\\')  escape = true;
-    }
-    else escape = false;
-
-  }
-
-  return (Tok){Undecided};
-
-}
-
-
 
 // ## Lexemes
 //
@@ -143,24 +104,52 @@ static Tok whitespace (Ctx *const ctx) {
   return many_of(is_whitespace, ctx);
 }
 
-// ### Lexeme: String
-// `string ::= Dbl-Quote ( Char-Seq ) Dbl-Quote`
+// ### Lexeme: String & Character
+// `string    ::= Dbl-Quote ( Char-Seq ) Dbl-Quote`
+// `character ::= S-Quote   ( Char-Seq ) S-Quote`
 //
 // A string literal is a string of ASCII-identifier between
 // two single quotes.
-
-static Tok string (Ctx *const ctx) {
-  return quoted_by('"', ctx);
-}
-
-// ### Lexeme: Character
-// `character ::= S-Quote ( Char-Seq ) S-Quote`
 //
 // A character literal is a string of ASCII-identifier between
 // two single quotes.
 
-static Tok character (Ctx *const ctx) {
-  return quoted_by('\'', ctx);
+static Tok string_or_character (Ctx *const ctx) {
+
+  if (ctx->buf[1] == ctx->buf[0]) {
+    return (Tok){Success, 2};
+  }
+
+  if (ctx->buf[2] == ctx->buf[0] &&
+      ctx->buf[1] != '\\') {
+    return (Tok){Success, 3};
+  }
+
+  if (ctx->buf[3] == ctx->buf[0] &&
+      ctx->buf[2] != '\\') {
+    return (Tok){Success, 4};
+  }
+
+  if (ctx->buf[3] == ctx->buf[0] &&
+      ctx->buf[2] == '\\'  &&
+      ctx->buf[1] == '\\') {
+    return (Tok){Success, 4};
+  }
+
+  bool escape = false;
+
+  for (size_t len = 1; len < ctx->sz; len++) {
+
+    if (escape == false) {
+      if (ctx->buf[len] == ctx->buf[0]) return (Tok){Success, len + 1};
+      if (ctx->buf[len] == '\\')        escape = true;
+    }
+    else escape = false;
+
+  }
+
+  return (Tok){Undecided};
+
 }
 
 // ### Lexeme: Punctuation (short)
@@ -308,11 +297,8 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '\n': case '\r':
     return ret(ctx, Whitespace, whitespace(ctx));
 
-    case '"':
-    return ret(ctx, String, string(ctx));
-
-    case '\'':
-    return ret(ctx, Character, character(ctx));
+    case '"': case '\'':
+    return ret(ctx, String, string_or_character(ctx));
 
     case ',': case ';':
     case '(': case ')':
