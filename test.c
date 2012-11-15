@@ -64,7 +64,7 @@ void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
 
 int main(void) {
 
-  unsigned char buf[4096];
+  char buf[4096];
   lexCtx ctx = {4096, 4096, buf, buf};
 
   read(0, ctx.buf, 4096);

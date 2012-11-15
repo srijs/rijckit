@@ -21,7 +21,7 @@
 
 typedef struct {
   size_t sz, back_sz;
-  unsigned char *buf, *back_buf;
+  char *buf, *back_buf;
 } NS(Ctx);
 
 
