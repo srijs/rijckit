@@ -32,11 +32,7 @@
 
 // ## Generic Parsing Functions
 
-static Tok many_of(bool (*check)(unsigned char), Ctx *const ctx) {
-
-  size_t off = 1;
-
-  #ifdef FAST
+static Tok many_of (bool (*check)(unsigned char), Ctx *const ctx) {
 
   if (check(ctx->buf[1]) == 0) {
     return (Tok){Success, 1};
@@ -50,11 +46,7 @@ static Tok many_of(bool (*check)(unsigned char), Ctx *const ctx) {
     return (Tok){Success, 3};
   }
 
-  off = 4;
-
-  #endif
-
-  for (size_t len = off; len < ctx->sz; len++) {
+  for (size_t len = 4; len < ctx->sz; len++) {
     if (check(ctx->buf[len]) == 0) {
       return (Tok){Success, len};
     }
@@ -98,7 +90,6 @@ static Tok identifier (Ctx *const ctx) {
   return many_of(is_alnum, ctx);
 }
 
-
 // ### Lexeme: Whitespace
 // `whitespace ::= ( Space | Tab | NL | CR ) { whitespace }`
 //
@@ -112,7 +103,6 @@ static bool is_whitespace (unsigned char c) {
 static Tok whitespace (Ctx *const ctx) {
   return many_of(is_whitespace, ctx);
 }
-
 
 // ### Lexeme: String
 // Fail.
