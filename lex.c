@@ -71,6 +71,8 @@ static bool is_whitespace (char c) {
 static Tok identifier_or_whitespace (bool (*check)(char),
                                      Ctx *const ctx) {
 
+  size_t len;
+
   if (check(ctx->buf[1]) == 0) {
     return (Tok){Success, 1};
   }
@@ -83,7 +85,7 @@ static Tok identifier_or_whitespace (bool (*check)(char),
     return (Tok){Success, 3};
   }
 
-  for (size_t len = 4; len < ctx->sz; len++) {
+  for (len = 4; len < ctx->sz; len++) {
     if (check(ctx->buf[len]) == 0) {
       return (Tok){Success, len};
     }
@@ -107,6 +109,9 @@ static Tok identifier_or_whitespace (bool (*check)(char),
 
 static Tok string_or_character (Ctx *const ctx) {
 
+  size_t len;
+  bool escape = false;
+
   if (ctx->buf[1] == ctx->buf[0]) {
     return (Tok){Success, 2};
   }
@@ -127,9 +132,7 @@ static Tok string_or_character (Ctx *const ctx) {
     return (Tok){Success, 4};
   }
 
-  bool escape = false;
-
-  for (size_t len = 1; len < ctx->sz; len++) {
+  for (len = 1; len < ctx->sz; len++) {
 
     if (escape == false) {
       if (ctx->buf[len] == ctx->buf[0]) return (Tok){Success, len + 1};
@@ -146,8 +149,9 @@ static Tok string_or_character (Ctx *const ctx) {
 // ### Lexeme: Punctuation
 
 static Tok punctuation (Ctx *const ctx) {
-  Tok tok;
 
+  Tok tok;
+  size_t len;
   const char suc = ctx->buf[1];
 
   switch (ctx->buf[0]) {
@@ -222,7 +226,7 @@ static Tok punctuation (Ctx *const ctx) {
 
     case '/':
     if unlikely (suc == '/') {
-      for (size_t len = 2; len < ctx->sz; len++) {
+      for (len = 2; len < ctx->sz; len++) {
         if unlikely (ctx->buf[len] == '\n'
                   || ctx->buf[len] == '\r') {
           tok = (Tok){Success, len};
