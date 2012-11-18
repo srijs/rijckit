@@ -117,6 +117,7 @@ static inline Tok identifier_or_whitespace (bool (*check)(char),
 // and end with an unescaped newline.
 
 static inline Tok str_or_char_or_pp (const char termn,
+                                     const int plus,
                                      Ctx *const ctx) {
 
   size_t len;
@@ -145,7 +146,7 @@ static inline Tok str_or_char_or_pp (const char termn,
   for (len = 1; len < ctx->sz; len++) {
 
     if (escape == false) {
-      if (ctx->buf[len] == termn) return (Tok){Success, len + 1};
+      if (ctx->buf[len] == termn) return (Tok){Success, len + plus};
       if (ctx->buf[len] == '\\')  escape = true;
     }
     else escape = false;
@@ -285,27 +286,23 @@ void lex (Ctx *const ctx, const Cont ret) {
 
   switch (ctx->buf[0]) {
 
-    case '\0':
-    return ret(ctx, Undefined, (Tok){End});
+    case '\0': return ret(ctx, Undefined, (Tok){End});
 
-    case '0'...'9':
-    return ret(ctx, Number, number(ctx));
+    case '0'...'9': return ret(ctx, Number, number(ctx));
 
-    case 'A'...'Z': case 'a'...'z':
-    case '_':
+    case 'A'...'Z':
+    case 'a'...'z': case '_':
     return ret(ctx, Identifier, identifier_or_whitespace(is_alnum, ctx));
 
-    case ' ': case '\t':
+    case ' ':  case '\t':
     case '\n': case '\r':
     return ret(ctx, Whitespace, identifier_or_whitespace(is_whitespace, ctx));
 
-    case '"':
-    return ret(ctx, String, str_or_char_or_pp('"', ctx));
-    case '\'':
-    return ret(ctx, Character, str_or_char_or_pp('\'', ctx));
-    case '#':
-    return ret(ctx, Directive, str_or_char_or_pp('\n', ctx));
+    case '"':  return ret(ctx, String,    str_or_char_or_pp('"',  1, ctx));
+    case '\'': return ret(ctx, Character, str_or_char_or_pp('\'', 1, ctx));
+    case '#':  return ret(ctx, Directive, str_or_char_or_pp('\n', 0, ctx));
 
+    case ':':
     case '!': case '%':
     case '<': case '>':
     case '=': case '?':
@@ -317,11 +314,9 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '(': case ')':
     case '[': case ']':
     case '{': case '}':
-    case ':':
     return ret(ctx, Punctuation, punctuation(ctx));
 
-    default:
-    return ret(ctx, Undefined, (Tok){Fail});
+    default: return ret(ctx, Undefined, (Tok){Fail});
 
   }
 
