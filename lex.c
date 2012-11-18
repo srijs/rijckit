@@ -74,10 +74,11 @@ static inline bool is_whitespace (char c) {
   return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
 
-static inline Tok identifier_or_whitespace (int type,
-                                            bool (*check)(char),
-                                            Ctx *const ctx) {
+static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
 
+  bool (*check)(char) = (bool (*[])(char)) {
+                          [Whitespace] = is_whitespace,
+                          [Identifier] = is_alnum} [type];
   size_t len;
 
   if (check(ctx->buf[1]) == 0) {
@@ -117,10 +118,11 @@ static inline Tok identifier_or_whitespace (int type,
 // A preprocessor directive is introduced by a hash character (`#`)
 // and end with an unescaped newline.
 
-static inline Tok str_or_char_or_pp (int type,
-                                     const char termn,
-                                     const int plus,
-                                     Ctx *const ctx) {
+static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
+
+  const char termn = (char[]) {[String] = '"', [Character] = '\'',
+                               [Directive] = '\n'} [type];
+  const int plus = (type == String || type == Character);
 
   size_t len;
   bool escape = false;
@@ -294,15 +296,15 @@ void lex (Ctx *const ctx, const Cont ret) {
 
     case 'A'...'Z':
     case 'a'...'z': case '_':
-    return ret(ctx, identifier_or_whitespace(Identifier, is_alnum, ctx));
+    return ret(ctx, identifier_or_whitespace(Identifier, ctx));
 
     case ' ':  case '\t':
     case '\n': case '\r':
-    return ret(ctx, identifier_or_whitespace(Whitespace, is_whitespace, ctx));
+    return ret(ctx, identifier_or_whitespace(Whitespace, ctx));
 
-    case '"':  return ret(ctx, str_or_char_or_pp(String,    '"',  1, ctx));
-    case '\'': return ret(ctx, str_or_char_or_pp(Character, '\'', 1, ctx));
-    case '#':  return ret(ctx, str_or_char_or_pp(Directive, '\n', 0, ctx));
+    case '"':  return ret(ctx, str_or_char_or_pp(String,    ctx));
+    case '\'': return ret(ctx, str_or_char_or_pp(Character, ctx));
+    case '#':  return ret(ctx, str_or_char_or_pp(Directive, ctx));
 
     case ':':
     case '!': case '%':
