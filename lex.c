@@ -75,7 +75,7 @@ static inline bool is_whitespace (char c) {
 }
 
 static inline Tok identifier_or_whitespace (bool (*check)(char),
-                                     Ctx *const ctx) {
+                                            Ctx *const ctx) {
 
   size_t len;
 
@@ -92,9 +92,7 @@ static inline Tok identifier_or_whitespace (bool (*check)(char),
   }
 
   for (len = 4; len < ctx->sz; len++) {
-    if (check(ctx->buf[len]) == 0) {
-      return (Tok){Success, len};
-    }
+    if (check(ctx->buf[len]) == 0) return (Tok){Success, len};
   }
 
   return (Tok){Undecided};
@@ -113,7 +111,8 @@ static inline Tok identifier_or_whitespace (bool (*check)(char),
 // A character literal is a string of ASCII-identifier between
 // two single quotes.
 
-static inline Tok string_or_character (const char termn, Ctx *const ctx) {
+static inline Tok string_or_character (const char termn,
+                                       Ctx *const ctx) {
 
   size_t len;
   bool escape = false;
@@ -142,7 +141,7 @@ static inline Tok string_or_character (const char termn, Ctx *const ctx) {
 
     if (escape == false) {
       if (ctx->buf[len] == termn) return (Tok){Success, len + 1};
-      if (ctx->buf[len] == '\\')        escape = true;
+      if (ctx->buf[len] == '\\')  escape = true;
     }
     else escape = false;
 
