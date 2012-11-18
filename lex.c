@@ -46,10 +46,10 @@ static inline Tok number (Ctx *const ctx) {
   size_t len;
   for (len = 1; len < ctx->sz; len++) {
     if (ctx->buf[len] < '0' || ctx->buf[len] > '9') {
-      return (Tok){Success, len};
+      return (Tok){Number, Success, len};
     }
   }
-  return (Tok){Undecided};
+  return (Tok){Number, Undecided};
 
 }
 
@@ -74,28 +74,29 @@ static inline bool is_whitespace (char c) {
   return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
 }
 
-static inline Tok identifier_or_whitespace (bool (*check)(char),
+static inline Tok identifier_or_whitespace (int type,
+                                            bool (*check)(char),
                                             Ctx *const ctx) {
 
   size_t len;
 
   if (check(ctx->buf[1]) == 0) {
-    return (Tok){Success, 1};
+    return (Tok){type, Success, 1};
   }
 
   if (check(ctx->buf[2]) == 0) {
-    return (Tok){Success, 2};
+    return (Tok){type, Success, 2};
   }
 
   if (check(ctx->buf[3]) == 0) {
-    return (Tok){Success, 3};
+    return (Tok){type, Success, 3};
   }
 
   for (len = 4; len < ctx->sz; len++) {
-    if (check(ctx->buf[len]) == 0) return (Tok){Success, len};
+    if (check(ctx->buf[len]) == 0) return (Tok){type, Success, len};
   }
 
-  return (Tok){Undecided};
+  return (Tok){type, Undecided};
 
 }
 
@@ -116,7 +117,8 @@ static inline Tok identifier_or_whitespace (bool (*check)(char),
 // A preprocessor directive is introduced by a hash character (`#`)
 // and end with an unescaped newline.
 
-static inline Tok str_or_char_or_pp (const char termn,
+static inline Tok str_or_char_or_pp (int type,
+                                     const char termn,
                                      const int plus,
                                      Ctx *const ctx) {
 
@@ -124,36 +126,36 @@ static inline Tok str_or_char_or_pp (const char termn,
   bool escape = false;
 
   if (ctx->buf[1] == termn) {
-    return (Tok){Success, 2};
+    return (Tok){type, Success, 2};
   }
 
   if (ctx->buf[2] == termn &&
       ctx->buf[1] != '\\') {
-    return (Tok){Success, 3};
+    return (Tok){type, Success, 3};
   }
 
   if (ctx->buf[3] == termn &&
       ctx->buf[2] != '\\') {
-    return (Tok){Success, 4};
+    return (Tok){type, Success, 4};
   }
 
   if (ctx->buf[3] == termn &&
       ctx->buf[2] == '\\'  &&
       ctx->buf[1] == '\\') {
-    return (Tok){Success, 4};
+    return (Tok){type, Success, 4};
   }
 
   for (len = 1; len < ctx->sz; len++) {
 
     if (escape == false) {
-      if (ctx->buf[len] == termn) return (Tok){Success, len + plus};
+      if (ctx->buf[len] == termn) return (Tok){type, Success, len + plus};
       if (ctx->buf[len] == '\\')  escape = true;
     }
     else escape = false;
 
   }
 
-  return (Tok){Undecided};
+  return (Tok){type, Undecided};
 
 }
 
@@ -172,65 +174,65 @@ static inline Tok punctuation (Ctx *const ctx) {
     case '!': case '^':
     case '=': case '*':
     case '%':
-    tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '=') ? 2 : 1};
     break;
 
     // Is double-and or and-equals?
 
     case '&':
-    tok = (Tok){Success, unlikely (suc == '&'
-                                 | suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '&'
+                                              | suc == '=') ? 2 : 1};
     break;
 
     // Is double-or or or-equals?
 
     case '|':
-    tok = (Tok){Success, unlikely (suc == '|'
-                                 | suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '|'
+                                              | suc == '=') ? 2 : 1};
     break;
 
     // Is three-way-conditional?
 
     case '?':
-    tok = (Tok){Success, unlikely (suc == ':') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == ':') ? 2 : 1};
     break;
 
     // Is double-plus or plus-equals?
 
     case '+':
-    tok = (Tok){Success, unlikely (suc == '+'
-                                 | suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '+'
+                                              | suc == '=') ? 2 : 1};
     break;
 
     // Is double-minus, arrow, or minus-equals?
 
     case '-':
-    tok = (Tok){Success, unlikely (suc == '-'
-                                 | suc == '>'
-                                 | suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '-'
+                                              | suc == '>'
+                                              | suc == '=') ? 2 : 1};
     break;
 
     // Is double-left-arrow or less-or-equal?
 
     case '<':
-    tok = (Tok){Success, unlikely (suc == '<'
-                                 | suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '<'
+                                              | suc == '=') ? 2 : 1};
     break;
 
     // Is double-right-arrow or greater-or-equal?
 
     case '>':
-    tok = (Tok){Success, unlikely (suc == '>'
-                                 | suc == '=') ? 2 : 1};
+    tok = (Tok){Punctuation, Success, unlikely (suc == '>'
+                                              | suc == '=') ? 2 : 1};
     break;
 
     // Is ellipsis or dot?
 
     case '.':
     if unlikely (suc == '.') {
-      tok = (Tok){Success, likely (ctx->buf[2] == '.') ? 3 : 1};
+      tok = (Tok){Punctuation, Success, likely (ctx->buf[2] == '.') ? 3 : 1};
     }
-    else tok = (Tok){Success, 1};
+    else tok = (Tok){Punctuation, Success, 1};
     break;
 
     // Is comment or divide-equals?
@@ -240,13 +242,13 @@ static inline Tok punctuation (Ctx *const ctx) {
       for (len = 2; len < ctx->sz; len++) {
         if unlikely (ctx->buf[len] == '\n'
                    | ctx->buf[len] == '\r') {
-          tok = (Tok){Success, len};
+          tok = (Tok){Punctuation, Success, len};
           goto end;
         }
       }
-      tok = (Tok){Undecided};
+      tok = (Tok){Punctuation, Undecided};
     }
-    else tok = (Tok){Success, unlikely (suc == '=') ? 2 : 1};
+    else tok = (Tok){Punctuation, Success, unlikely (suc == '=') ? 2 : 1};
     end: break;
 
     case ',': case ';':
@@ -254,7 +256,7 @@ static inline Tok punctuation (Ctx *const ctx) {
     case '[': case ']':
     case '{': case '}':
     case ':':
-    tok = (Tok){Success, 1};
+    tok = (Tok){Punctuation, Success, 1};
     break;
 
     // Since we have handled all possible cases, we can declare the
@@ -286,21 +288,21 @@ void lex (Ctx *const ctx, const Cont ret) {
 
   switch (ctx->buf[0]) {
 
-    case '\0': return ret(ctx, Undefined, (Tok){End});
+    case '\0': return ret(ctx, (Tok){Undefined, End});
 
-    case '0'...'9': return ret(ctx, Number, number(ctx));
+    case '0'...'9': return ret(ctx, number(ctx));
 
     case 'A'...'Z':
     case 'a'...'z': case '_':
-    return ret(ctx, Identifier, identifier_or_whitespace(is_alnum, ctx));
+    return ret(ctx, identifier_or_whitespace(Identifier, is_alnum, ctx));
 
     case ' ':  case '\t':
     case '\n': case '\r':
-    return ret(ctx, Whitespace, identifier_or_whitespace(is_whitespace, ctx));
+    return ret(ctx, identifier_or_whitespace(Whitespace, is_whitespace, ctx));
 
-    case '"':  return ret(ctx, String,    str_or_char_or_pp('"',  1, ctx));
-    case '\'': return ret(ctx, Character, str_or_char_or_pp('\'', 1, ctx));
-    case '#':  return ret(ctx, Directive, str_or_char_or_pp('\n', 0, ctx));
+    case '"':  return ret(ctx, str_or_char_or_pp(String,    '"',  1, ctx));
+    case '\'': return ret(ctx, str_or_char_or_pp(Character, '\'', 1, ctx));
+    case '#':  return ret(ctx, str_or_char_or_pp(Directive, '\n', 0, ctx));
 
     case ':':
     case '!': case '%':
@@ -314,9 +316,9 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '(': case ')':
     case '[': case ']':
     case '{': case '}':
-    return ret(ctx, Punctuation, punctuation(ctx));
+    return ret(ctx, punctuation(ctx));
 
-    default: return ret(ctx, Undefined, (Tok){Fail});
+    default: return ret(ctx, (Tok){Undefined, Fail});
 
   }
 

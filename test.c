@@ -6,7 +6,7 @@
 #define NS(id) lex ## id
 #include "lex.h"
 
-void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
+void print_tok(lexCtx *const ctx, const lexTok tok) {
 
   char *tok_str[] = {
     [lexUndefined] = "Undefined",
@@ -24,7 +24,7 @@ void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
   switch (tok.state) {
 
     case lexFail:
-    printf("Fail, Tok: %s, Char: %u\n", tok_str[type], ctx->buf[0]);
+    printf("Fail, Tok: %s, Char: %u\n", tok_str[tok.type], ctx->buf[0]);
     return exit(0);
 
     case lexSuccess:

@@ -24,30 +24,25 @@ typedef struct {
   char *buf, *back_buf;
 } NS(Ctx);
 
-
-// ### Token Types
+// ### Token Structure
+// The emitted tokens include a type a success-indicating state and an
+// optional length.
 // We operate on a small set of tokens types.
 // Keywords, typenames and identifiers are summarized under the
 // `Identifier` token type. All kinds of punctuations have a common
 // type, comments are also understood as punctuation.
 
-typedef enum {
-  NS(Undefined),
-  NS(Number),
-  NS(Identifier),
-  NS(Whitespace),
-  NS(String),
-  NS(Character),
-  NS(Punctuation),
-  NS(Directive)
-} NS(Type);
-
-
-// ### Token Structure
-// The emitted tokens include a success-indicating state and an
-// optional length.
-
 typedef struct {
+  enum {
+    NS(Undefined),
+    NS(Number),
+    NS(Identifier),
+    NS(Whitespace),
+    NS(String),
+    NS(Character),
+    NS(Punctuation),
+    NS(Directive)
+  } type;
   enum {
     NS(Success), NS(Fail),
     NS(Undecided), NS(End)
@@ -55,14 +50,12 @@ typedef struct {
   size_t len;
 } NS(Tok);
 
-
 // ### Continuation Type
 // Since we'll program in Continuation-Passing-Style, we define the
 // type of our continuation.
 
 typedef void (*NS(Cont))
   (NS(Ctx) *const,
-   const NS(Type),
    const NS(Tok));
 
 
