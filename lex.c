@@ -76,22 +76,18 @@ static inline bool is_whitespace (char c) {
 
 static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
 
-  bool (*check)(char) = (bool (*[])(char)) {
-                          [Whitespace] = is_whitespace,
-                          [Identifier] = is_alnum} [type];
+  bool (*check)(char) = (bool (*[])(char)) {[Whitespace] = is_whitespace,
+                                            [Identifier] = is_alnum} [type];
   size_t len;
 
-  if (check(ctx->buf[1]) == 0) {
+  if (check(ctx->buf[1]) == 0)
     return (Tok){type, Success, 1};
-  }
 
-  if (check(ctx->buf[2]) == 0) {
+  if (check(ctx->buf[2]) == 0)
     return (Tok){type, Success, 2};
-  }
 
-  if (check(ctx->buf[3]) == 0) {
+  if (check(ctx->buf[3]) == 0)
     return (Tok){type, Success, 3};
-  }
 
   for (len = 4; len < ctx->sz; len++) {
     if (check(ctx->buf[len]) == 0) return (Tok){type, Success, len};
@@ -120,32 +116,28 @@ static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
 
 static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 
-  const int plus = (type == String || type == Character) ? 1 : 0;
+  const int  plus  = (type == String || type == Character) ? 1 : 0;
   const char termn = (char[]) {[String] = '"', [Character] = '\'',
                                [Directive] = '\n'} [type];
 
   size_t len;
-  bool escape = false;
+  bool   escape = false;
 
-  if (ctx->buf[1] == termn) {
+  if (ctx->buf[1] == termn)
     return (Tok){type, Success, 1 + plus};
-  }
 
   if (ctx->buf[2] == termn &&
-      ctx->buf[1] != '\\') {
+      ctx->buf[1] != '\\')
     return (Tok){type, Success, 2 + plus};
-  }
 
   if (ctx->buf[3] == termn &&
-      ctx->buf[2] != '\\') {
+      ctx->buf[2] != '\\')
     return (Tok){type, Success, 3 + plus};
-  }
 
   if (ctx->buf[3] == termn &&
       ctx->buf[2] == '\\'  &&
-      ctx->buf[1] == '\\') {
+      ctx->buf[1] == '\\')
     return (Tok){type, Success, 3 + plus};
-  }
 
   for (len = 1; len < ctx->sz; len++) {
 
