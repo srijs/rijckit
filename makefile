@@ -4,7 +4,7 @@ test: lex.h lex.c test.c
 	$(CC) -std=c99 -Os lex.c test.c -o test
 
 run: test
-	cpp lex.c | grep -v '#' | ./test
+	./test < lex.c
 
 verify: lex.h lex.c
 	$(CC) -std=c99 -O3 lex.c -S -o .asm.s

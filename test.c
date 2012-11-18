@@ -15,7 +15,8 @@ void print_tok(lexCtx *const ctx, const lexType type, const lexTok tok) {
     [lexWhitespace] = "Whitespace",
     [lexString] = "String",
     [lexCharacter] = "Character",
-    [lexPunctuation] = "Punctuation"
+    [lexPunctuation] = "Punctuation",
+    [lexDirective] = "Directive"
   };
 
   size_t sub = 0;
