@@ -120,9 +120,9 @@ static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
 
 static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 
+  const int plus = (type == String || type == Character) ? 1 : 0;
   const char termn = (char[]) {[String] = '"', [Character] = '\'',
                                [Directive] = '\n'} [type];
-  const int plus = (type == String || type == Character);
 
   size_t len;
   bool escape = false;
