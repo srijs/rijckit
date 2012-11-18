@@ -66,12 +66,12 @@ static inline Tok number (Ctx *const ctx) {
 // new-line and carriage-return characters.
 
 static inline bool is_alnum (char c) {
-  return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'z'))
-        | ((c >= '0') & (c <= '9')) | (c == '_'));
+  return ((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'z'))
+       | ((c >= '0') & (c <= '9')) | (c == '_');
 }
 
 static inline bool is_whitespace (char c) {
-  return ((c == ' ') | (c == '\t') | (c == '\n') | (c == '\r'));
+  return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
 }
 
 static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
@@ -140,13 +140,11 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
     return (Tok){type, Success, 3 + plus};
 
   for (len = 1; len < ctx->sz; len++) {
-
     if (escape == false) {
       if (ctx->buf[len] == termn) return (Tok){type, Success, len + plus};
       if (ctx->buf[len] == '\\')  escape = true;
     }
     else escape = false;
-
   }
 
   return (Tok){type, Undecided};
@@ -276,9 +274,7 @@ void lex (Ctx *const ctx, const Cont ret) {
   // We require that the length of our buffer is at least four
   // characters, else the behaviour of this function is undefined.
 
-  if (ctx->sz < 4) {
-    __builtin_unreachable();
-  }
+  if (ctx->sz < 4) __builtin_unreachable();
 
   switch (ctx->buf[0]) {
 
