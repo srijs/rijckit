@@ -128,23 +128,23 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
   bool escape = false;
 
   if (ctx->buf[1] == termn) {
-    return (Tok){type, Success, 2};
+    return (Tok){type, Success, 1 + plus};
   }
 
   if (ctx->buf[2] == termn &&
       ctx->buf[1] != '\\') {
-    return (Tok){type, Success, 3};
+    return (Tok){type, Success, 2 + plus};
   }
 
   if (ctx->buf[3] == termn &&
       ctx->buf[2] != '\\') {
-    return (Tok){type, Success, 4};
+    return (Tok){type, Success, 3 + plus};
   }
 
   if (ctx->buf[3] == termn &&
       ctx->buf[2] == '\\'  &&
       ctx->buf[1] == '\\') {
-    return (Tok){type, Success, 4};
+    return (Tok){type, Success, 3 + plus};
   }
 
   for (len = 1; len < ctx->sz; len++) {
