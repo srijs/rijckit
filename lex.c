@@ -99,20 +99,25 @@ static inline Tok identifier_or_whitespace (bool (*check)(char),
 
 }
 
-// ### Lexeme: String & Character
+// ### Lexeme: String, Character & Pre-Processor Directive
 //
 // `string    ::= Dbl-Quote ( Char-Seq ) Dbl-Quote`
 //
 // `character ::= S-Quote   ( Char-Seq ) S-Quote`
+//
+// `directive ::= Hash      ( Seq      ) Newline`
 //
 // A string literal is a string of ASCII-identifier between
 // two double quotes.
 //
 // A character literal is a string of ASCII-identifier between
 // two single quotes.
+//
+// A preprocessor directive is introduced by a hash character (`#`)
+// and end with an unescaped newline.
 
-static inline Tok string_or_character (const char termn,
-                                       Ctx *const ctx) {
+static inline Tok str_or_char_or_pp (const char termn,
+                                     Ctx *const ctx) {
 
   size_t len;
   bool escape = false;
@@ -295,9 +300,11 @@ void lex (Ctx *const ctx, const Cont ret) {
     return ret(ctx, Whitespace, identifier_or_whitespace(is_whitespace, ctx));
 
     case '"':
-    return ret(ctx, String, string_or_character('"', ctx));
+    return ret(ctx, String, str_or_char_or_pp('"', ctx));
     case '\'':
-    return ret(ctx, Character, string_or_character('\'', ctx));
+    return ret(ctx, Character, str_or_char_or_pp('\'', ctx));
+    case '#':
+    return ret(ctx, Directive, str_or_char_or_pp('\n', ctx));
 
     case '!': case '%':
     case '<': case '>':

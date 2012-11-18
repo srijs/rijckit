@@ -38,7 +38,8 @@ typedef enum {
   NS(Whitespace),
   NS(String),
   NS(Character),
-  NS(Punctuation)
+  NS(Punctuation),
+  NS(Directive)
 } NS(Type);
 
 
