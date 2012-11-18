@@ -66,7 +66,7 @@ static inline Tok number (Ctx *const ctx) {
 // new-line and carriage-return characters.
 
 static inline bool is_alnum (char c) {
-  return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'Z'))
+  return (((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'z'))
         | ((c >= '0') & (c <= '9')) | (c == '_'));
 }
 
