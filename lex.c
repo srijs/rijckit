@@ -113,26 +113,26 @@ static inline Tok identifier_or_whitespace (bool (*check)(char),
 // A character literal is a string of ASCII-identifier between
 // two single quotes.
 
-static inline Tok string_or_character (Ctx *const ctx) {
+static inline Tok string_or_character (const char termn, Ctx *const ctx) {
 
   size_t len;
   bool escape = false;
 
-  if (ctx->buf[1] == ctx->buf[0]) {
+  if (ctx->buf[1] == termn) {
     return (Tok){Success, 2};
   }
 
-  if (ctx->buf[2] == ctx->buf[0] &&
+  if (ctx->buf[2] == termn &&
       ctx->buf[1] != '\\') {
     return (Tok){Success, 3};
   }
 
-  if (ctx->buf[3] == ctx->buf[0] &&
+  if (ctx->buf[3] == termn &&
       ctx->buf[2] != '\\') {
     return (Tok){Success, 4};
   }
 
-  if (ctx->buf[3] == ctx->buf[0] &&
+  if (ctx->buf[3] == termn &&
       ctx->buf[2] == '\\'  &&
       ctx->buf[1] == '\\') {
     return (Tok){Success, 4};
@@ -141,7 +141,7 @@ static inline Tok string_or_character (Ctx *const ctx) {
   for (len = 1; len < ctx->sz; len++) {
 
     if (escape == false) {
-      if (ctx->buf[len] == ctx->buf[0]) return (Tok){Success, len + 1};
+      if (ctx->buf[len] == termn) return (Tok){Success, len + 1};
       if (ctx->buf[len] == '\\')        escape = true;
     }
     else escape = false;
@@ -296,9 +296,9 @@ void lex (Ctx *const ctx, const Cont ret) {
     return ret(ctx, Whitespace, identifier_or_whitespace(is_whitespace, ctx));
 
     case '"':
-    return ret(ctx, String, string_or_character(ctx));
+    return ret(ctx, String, string_or_character('"', ctx));
     case '\'':
-    return ret(ctx, Character, string_or_character(ctx));
+    return ret(ctx, Character, string_or_character('\'', ctx));
 
     case '!': case '%':
     case '<': case '>':
