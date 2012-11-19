@@ -119,7 +119,6 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
   const int  plus  = (type == String || type == Character) ? 1 : 0;
   const char termn = (char[]) {[String] = '"', [Character] = '\'',
                                [Directive] = '\n'} [type];
-
   size_t len;
   bool   escape = false;
 
@@ -165,7 +164,6 @@ static inline Tok punctuation (Ctx *const ctx) {
     if unlikely (ctx->buf[1] == ctx->buf[0])
       return (Tok){Punctuation, Success, 2 + ((ctx->buf[0] == '<' | ctx->buf[0] == '>')
                                               & (ctx->buf[2] == '='))};
-
     // equal follows?
     case '^': case '=': case '*':
     case '%': case '~': case '!':
@@ -184,7 +182,6 @@ static inline Tok punctuation (Ctx *const ctx) {
     return (Tok){Punctuation, Success, 1 + 2 * (ctx->buf[0] == '.' &
                                                 ctx->buf[1] == '.' &
                                                 ctx->buf[2] == '.')};
-
     // Is comment or divide-equals?
     case '/':
     if unlikely (ctx->buf[1] == '/') {
