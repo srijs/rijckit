@@ -155,111 +155,53 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 
 static inline Tok punctuation (Ctx *const ctx) {
 
-  Tok tok;
   size_t len;
-  const char suc = ctx->buf[1];
 
   switch (ctx->buf[0]) {
 
-    // In the simple cases, just an equal-sign may follow...
+    // repeats itself?
+    case '&': case '<': case '>':
+    case '|': case '+': case '-':
+    if unlikely (ctx->buf[1] == ctx->buf[0])
+      return (Tok){Punctuation, Success, 2 + ((ctx->buf[0] == '<' | ctx->buf[0] == '>')
+                                              & (ctx->buf[2] == '='))};
 
-    case '!': case '^':
-    case '=': case '*':
-    case '%':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '=') ? 2 : 1};
-    break;
+    // equal follows?
+    case '^': case '=': case '*':
+    case '%': case '~': case '!':
+    if unlikely (ctx->buf[1] == '=')
+      return (Tok){Punctuation, Success, 2};
 
-    // Is double-and or and-equals?
-
-    case '&':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '&'
-                                              | suc == '=') ? 2 : 1};
-    break;
-
-    // Is double-or or or-equals?
-
-    case '|':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '|'
-                                              | suc == '=') ? 2 : 1};
-    break;
-
-    // Is three-way-conditional?
+    return (Tok){Punctuation, Success, 1};
 
     case '?':
-    tok = (Tok){Punctuation, Success, unlikely (suc == ':') ? 2 : 1};
-    break;
+    if unlikely (ctx->buf[1] == ':')
+      return (Tok){Punctuation, Success, 2};
 
-    // Is double-plus or plus-equals?
+    case '(': case ')': case '[': case ']': case '.':
+    case '{': case '}': case ':': case ';': case ',':
 
-    case '+':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '+'
-                                              | suc == '=') ? 2 : 1};
-    break;
-
-    // Is double-minus, arrow, or minus-equals?
-
-    case '-':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '-'
-                                              | suc == '>'
-                                              | suc == '=') ? 2 : 1};
-    break;
-
-    // Is double-left-arrow or less-or-equal?
-
-    case '<':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '<'
-                                              | suc == '=') ? 2 : 1};
-    break;
-
-    // Is double-right-arrow or greater-or-equal?
-
-    case '>':
-    tok = (Tok){Punctuation, Success, unlikely (suc == '>'
-                                              | suc == '=') ? 2 : 1};
-    break;
-
-    // Is ellipsis or dot?
-
-    case '.':
-    if unlikely (suc == '.') {
-      tok = (Tok){Punctuation, Success, likely (ctx->buf[2] == '.') ? 3 : 1};
-    }
-    else tok = (Tok){Punctuation, Success, 1};
-    break;
+    return (Tok){Punctuation, Success, 1 + 2 * (ctx->buf[0] == '.' &
+                                                ctx->buf[1] == '.' &
+                                                ctx->buf[2] == '.')};
 
     // Is comment or divide-equals?
-
     case '/':
-    if unlikely (suc == '/') {
+    if unlikely (ctx->buf[1] == '/') {
       for (len = 2; len < ctx->sz; len++) {
-        if unlikely (ctx->buf[len] == '\n'
-                   | ctx->buf[len] == '\r') {
-          tok = (Tok){Punctuation, Success, len};
-          goto end;
+        if unlikely (ctx->buf[len] == '\n' | ctx->buf[len] == '\r') {
+          return (Tok){Punctuation, Success, len};
         }
       }
-      tok = (Tok){Punctuation, Undecided};
+      return (Tok){Punctuation, Undecided};
     }
-    else tok = (Tok){Punctuation, Success, unlikely (suc == '=') ? 2 : 1};
-    end: break;
-
-    case ',': case ';':
-    case '(': case ')':
-    case '[': case ']':
-    case '{': case '}':
-    case ':':
-    tok = (Tok){Punctuation, Success, 1};
-    break;
-
-    // Since we have handled all possible cases, we can declare the
-    // following codepath as undefined.
-
-    default:
-    __builtin_unreachable();
+    return (Tok){Punctuation, Success, unlikely (ctx->buf[1] == '=') ? 2 : 1};
 
   }
 
-  return tok;
+  // Since we have handled all possible cases, we can declare the
+  // following codepath as undefined.
+  __builtin_unreachable();
 
 }
 
