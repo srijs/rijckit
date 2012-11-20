@@ -233,7 +233,7 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '\'': return ret(ctx, str_or_char_or_pp(Character, ctx));
     case '#':  return ret(ctx, str_or_char_or_pp(Directive, ctx));
 
-    case ':':
+    case ':': case '~':
     case '!': case '%':
     case '<': case '>':
     case '=': case '?':
