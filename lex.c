@@ -155,36 +155,37 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 static inline Tok punctuation (Ctx *const ctx) {
 
   size_t len;
+  char a = ctx->buf[0], b = ctx->buf[1], c = ctx->buf[2];
 
   switch (ctx->buf[0]) {
 
     // repeats itself?
     case '&': case '<': case '>':
     case '|': case '+': case '-':
-    if unlikely (ctx->buf[1] == ctx->buf[0])
-      return (Tok){Punctuation, Success, 2 + ((ctx->buf[0] == '<' | ctx->buf[0] == '>')
-                                              & (ctx->buf[2] == '='))};
+    if unlikely (b == a)
+      return (Tok){Punctuation, Success, 2 + ((a == '<' | a == '>') &
+                                              (c == '='))};
     // equal follows?
     case '^': case '=': case '*':
     case '%': case '~': case '!':
-    if unlikely (ctx->buf[1] == '=')
+    if unlikely (b == '=')
       return (Tok){Punctuation, Success, 2};
 
     return (Tok){Punctuation, Success, 1};
 
     case '?':
-    if unlikely (ctx->buf[1] == ':')
+    if unlikely (b == ':')
       return (Tok){Punctuation, Success, 2};
 
     case '(': case ')': case '[': case ']': case '.':
     case '{': case '}': case ':': case ';': case ',':
 
-    return (Tok){Punctuation, Success, 1 + 2 * (ctx->buf[0] == '.' &
-                                                ctx->buf[1] == '.' &
-                                                ctx->buf[2] == '.')};
+    return (Tok){Punctuation, Success, 1 + 2 * (a == '.' &
+                                                b == '.' &
+                                                c == '.')};
     // Is comment or divide-equals?
     case '/':
-    if unlikely (ctx->buf[1] == '/') {
+    if unlikely (b == '/') {
       for (len = 2; len < ctx->sz; len++) {
         if unlikely (ctx->buf[len] == '\n' | ctx->buf[len] == '\r') {
           return (Tok){Punctuation, Success, len};
@@ -192,7 +193,7 @@ static inline Tok punctuation (Ctx *const ctx) {
       }
       return (Tok){Punctuation, Undecided};
     }
-    return (Tok){Punctuation, Success, unlikely (ctx->buf[1] == '=') ? 2 : 1};
+    return (Tok){Punctuation, Success, unlikely (b == '=') ? 2 : 1};
 
   }
 
