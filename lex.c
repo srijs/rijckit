@@ -159,18 +159,24 @@ static inline Tok punctuation (Ctx *const ctx) {
 
   switch (ctx->buf[0]) {
 
+    // arrow?
+    case '-':
+    if unlikely (b == '>')
+      return (Tok){Punctuation, Success, 2};
+
     // repeats itself?
     case '&': case '<': case '>':
-    case '|': case '+': case '-':
+    case '|': case '+':
     if unlikely (b == a)
       return (Tok){Punctuation, Success, 2 + ((a == '<' | a == '>') &
                                               (c == '='))};
     // equal follows?
     case '^': case '=': case '*':
-    case '%': case '~': case '!':
+    case '%': case '!':
     if unlikely (b == '=')
       return (Tok){Punctuation, Success, 2};
 
+    case '~':
     return (Tok){Punctuation, Success, 1};
 
     case '?':
