@@ -159,41 +159,45 @@ static inline Tok punctuation (Ctx *const ctx) {
 
   switch (ctx->buf[0]) {
 
-    // arrow?
-    case '-':
+    // This first part matches the arrow and all punctuation that may
+    // potentially repeat itself or be followed by an equal-sign to form
+    // a multicharacter-punctuation.
+
+    case '-': // Is arrow?
     if unlikely (b == '>')
       return (Tok){Punctuation, Success, 2};
 
-    // repeats itself?
     case '&': case '<': case '>':
-    case '|': case '+':
+    case '|': case '+': // Repeats itself?
     if unlikely (b == a)
-      return (Tok){Punctuation, Success, 2 + ((a == '<' | a == '>') &
-                                              (c == '='))};
-    // equal follows?
+      return (Tok){Punctuation, Success, 2 + ((a == '<' | a == '>') & (c == '='))};
     case '^': case '=': case '*':
-    case '%': case '!':
+    case '%': case '!': // Equal follows?
     return (Tok){Punctuation, Success, 1 + (b == '=')};
+
+    // In this second part we match the tetiary-expression punctuation
+    // `?` and `?:`.
 
     case '?':
     return (Tok){Punctuation, Success, 1 + (b == ':')};
 
+    // This matched all monocharacter-punctuations.
+
     case '(': case ')': case '[': case ']': case '.':
     case '{': case '}': case ':': case ';': case ',': case '~':
-    return (Tok){Punctuation, Success, 1 + 2 * (a == '.' &
-                                                b == '.' &
-                                                c == '.')};
-    // Is comment or divide-equals?
+    return (Tok){Punctuation, Success, 1 + 2 * (a == '.' & b == '.' & c == '.')};
+
+    // Check if `/` stands for itself, is part of a `//`, or
+    // introduces a comment.
+
     case '/':
     if unlikely (b == '/') {
-      for (len = 2; len < ctx->sz; len++) {
-        if unlikely (ctx->buf[len] == '\n' | ctx->buf[len] == '\r') {
+      for (len = 2; len < ctx->sz; len++)
+        if unlikely (ctx->buf[len] == '\n' | ctx->buf[len] == '\r')
           return (Tok){Punctuation, Success, len};
-        }
-      }
       return (Tok){Punctuation, Undecided};
     }
-    return (Tok){Punctuation, Success, unlikely (b == '=') ? 2 : 1};
+    return (Tok){Punctuation, Success, 1 + (b == '=')};
 
   }
 
