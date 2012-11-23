@@ -151,6 +151,26 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 }
 
 // ### Lexeme: Punctuation
+//
+// In this function we switch on the first character of the buffer,
+// and then perform further checks to determine the type of punctuation.
+// Because the switch statement uses falltrough-techniques, we'll explain
+// it's functionality carefully.
+//
+// In the first part of the switch statement, we match the arrow (`->`) as
+// well as all punctuation that potentially may repeat itself or be followed
+// by an equal-sign to form a multicharacter-punctuation.
+//
+// The second part matches the teriary-expression punctuation `?` and `?:`.
+//
+// After that, all monocharacter punctuation is matched.
+//
+// The last block checks if `/` stands for itself, is part of an `/=` or
+// introduces a comment.
+//
+// Since at the end of the switch-statement all valid punctuation should have
+// been matched and returned from the function, we can declare the following
+// codepath as undefined.
 
 static inline Tok punctuation (Ctx *const ctx) {
 
@@ -159,36 +179,23 @@ static inline Tok punctuation (Ctx *const ctx) {
 
   switch (ctx->buf[0]) {
 
-    // This first part matches the arrow and all punctuation that may
-    // potentially repeat itself or be followed by an equal-sign to form
-    // a multicharacter-punctuation.
-
-    case '-': // Is arrow?
+    case '-':
     if unlikely (b == '>')
       return (Tok){Punctuation, Success, 2};
-
     case '&': case '<': case '>':
-    case '|': case '+': // Repeats itself?
+    case '|': case '+':
     if unlikely (b == a)
       return (Tok){Punctuation, Success, 2 + ((a == '<' | a == '>') & (c == '='))};
     case '^': case '=': case '*':
-    case '%': case '!': // Equal follows?
+    case '%': case '!':
     return (Tok){Punctuation, Success, 1 + (b == '=')};
-
-    // In this second part we match the tetiary-expression punctuation
-    // `?` and `?:`.
 
     case '?':
     return (Tok){Punctuation, Success, 1 + (b == ':')};
 
-    // This matched all monocharacter-punctuations.
-
     case '(': case ')': case '[': case ']': case '.':
     case '{': case '}': case ':': case ';': case ',': case '~':
     return (Tok){Punctuation, Success, 1 + 2 * (a == '.' & b == '.' & c == '.')};
-
-    // Check if `/` stands for itself, is part of a `//`, or
-    // introduces a comment.
 
     case '/':
     if unlikely (b == '/') {
@@ -201,8 +208,6 @@ static inline Tok punctuation (Ctx *const ctx) {
 
   }
 
-  // Since we have handled all possible cases, we can declare the
-  // following codepath as undefined.
   __builtin_unreachable();
 
 }
