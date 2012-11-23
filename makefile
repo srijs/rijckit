@@ -1,10 +1,13 @@
 .PHONY: sloc
 
-test: lex.h lex.c test.c
-	$(CC) -std=c99 -Os lex.c test.c -o test
+lib: lex.h lex.c
+	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o
+	$(CC) -shared lex.o -o liblex.so
 
-run: test
-	./test < lex.c
+run: lib
+	cpp < lex.h > lex.hi
+	python test.py < lex.c
+	rm lex.hi
 
 verify: lex.h lex.c
 	$(CC) -std=c99 -O3 lex.c -S -o .asm.s
