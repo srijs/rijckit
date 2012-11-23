@@ -175,7 +175,9 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 static inline Tok punctuation (Ctx *const ctx) {
 
   size_t len;
-  char a = ctx->buf[0], b = ctx->buf[1], c = ctx->buf[2];
+  char a = ctx->buf[0],
+       b = ctx->buf[1],
+       c = ctx->buf[2];
 
   switch (ctx->buf[0]) {
 
