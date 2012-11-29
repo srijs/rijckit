@@ -38,7 +38,7 @@
 // ### Lexeme: Number
 // Stub.
 
-static inline Tok number (Ctx *const ctx) {
+static inline Tok nu (Ctx *const ctx) {
 
   size_t len;
   for (len = 1; len < ctx->sz; len++) {
@@ -71,10 +71,8 @@ static inline bool is_whitespace (char c) {
   return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
 }
 
-static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
+static inline Tok alpha (int type, bool (*check)(char), Ctx *const ctx) {
 
-  bool (*check)(char) = (bool (*[])(char)) {[Whitespace] = is_whitespace,
-                                            [Identifier] = is_alnum} [type];
   size_t len;
 
   if (check(ctx->buf[1]) == 0)
@@ -109,11 +107,8 @@ static inline Tok identifier_or_whitespace (int type, Ctx *const ctx) {
 // A preprocessor directive is introduced by a hash character (`#`) and end with
 // an unescaped newline.
 
-static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
+static inline Tok tau (int type, int plus, char termn, Ctx *const ctx) {
 
-  const int  plus  = (type == String || type == Character) ? 1 : 0;
-  const char termn = (char[]) {[String] = '"', [Character] = '\'',
-                               [Directive] = '\n'} [type];
   size_t len;
   bool   escape = false;
 
@@ -167,7 +162,7 @@ static inline Tok str_or_char_or_pp (int type, Ctx *const ctx) {
 // been matched and returned from the function, we can declare the following
 // codepath as undefined.
 
-static inline Tok punctuation (Ctx *const ctx) {
+static inline Tok pi (Ctx *const ctx) {
 
   size_t len;
   char a = ctx->buf[0],
@@ -210,13 +205,37 @@ static inline Tok punctuation (Ctx *const ctx) {
 }
 
 // ## Routing
+//
+// Based on the first character of the input buffer, we route the
+// tokenization process to a specific lexeme.
+// We require that the length of our buffer is at least four characters, else
+// the behaviour of this function is undefined.
+//
+// This function is a straight-forward implementatio of the following
+// mathematical description:
+//
+//<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+//<script type="math/tex">
+//\lambda (s) =
+//  \begin{cases}
+//    \langle\text{Undefined},\text{End},0\rangle  &\mbox{if } s_0 = 0  \\
+//    \tau   (\text{String},    1, 34)             &\mbox{if } s_0 = 34 \\
+//    \tau   (\text{Character}, 1, 39)             &\mbox{if } s_0 = 39 \\
+//    \tau   (\text{Directive}, 0, 35)             &\mbox{if } s_0 = 35 \\
+//    \nu    (\text{Number})                       &\mbox{if } s_0 \in N := \small{\{a \in \text{ASCII} : \text{$a$ is numerical}\}}        \\
+//    \alpha (\text{Whitespace}, S)                &\mbox{if } s_0 \in S := \small{\{a \in \text{ASCII} : \text{$a$ is whitespace}\}}       \\
+//    \alpha (\text{Identifier}, A \cup N)         &\mbox{if } s_0 \in A := \small{\{a \in \text{ASCII} : \text{$a$ is alphabetical}\}}     \\
+//    \pi    (\text{Punctuation})                  &\mbox{if } s_0 \in P := \small{\{a \in \text{ASCII} : \text{$a$ introd. punctuation}\}} \\
+//    \langle\text{Undefined},\text{Fail},0\rangle &\mbox{otherwise}
+//  \end{cases} \\
+//  \text{with:} \\
+//    N = [48,57] \\
+//    S = \{9,10,13,32\} \\
+//    A = [65, 122] \setminus \{91,92,93,94,96\} \\
+//    P = \{33,37,38\} \cup [40,47] \cup [58,63] \cup [91,94] \cup [123,126]
+//</script>
 
 void lex (Ctx *const ctx, const Cont ret) {
-
-  // Based on the first character of the input buffer, we route the
-  // tokenization process to a specific lexeme.
-  // We require that the length of our buffer is at least four characters, else
-  // the behaviour of this function is undefined.
 
   if (ctx->sz < 4) __builtin_unreachable();
 
@@ -224,19 +243,19 @@ void lex (Ctx *const ctx, const Cont ret) {
 
     case '\0': return ret(ctx, (Tok){Undefined, End});
 
-    case '0'...'9': return ret(ctx, number(ctx));
+    case '"':  return ret(ctx, tau(String,    1, '"',  ctx));
+    case '\'': return ret(ctx, tau(Character, 1, '\'', ctx));
+    case '#':  return ret(ctx, tau(Directive, 0, '\n', ctx));
 
-    case 'A'...'Z':
-    case 'a'...'z': case '_':
-    return ret(ctx, identifier_or_whitespace(Identifier, ctx));
+    case '0'...'9': return ret(ctx, nu(ctx));
 
     case ' ':  case '\t':
     case '\n': case '\r':
-    return ret(ctx, identifier_or_whitespace(Whitespace, ctx));
+    return ret(ctx, alpha(Whitespace, is_whitespace, ctx));
 
-    case '"':  return ret(ctx, str_or_char_or_pp(String,    ctx));
-    case '\'': return ret(ctx, str_or_char_or_pp(Character, ctx));
-    case '#':  return ret(ctx, str_or_char_or_pp(Directive, ctx));
+    case 'A'...'Z':
+    case 'a'...'z': case '_':
+    return ret(ctx, alpha(Identifier, is_alnum, ctx));
 
     case ':': case '~': case '!': case '%':
     case '<': case '>': case '=': case '?':
@@ -244,7 +263,7 @@ void lex (Ctx *const ctx, const Cont ret) {
     case '.': case '^': case '&': case '|':
     case ',': case ';': case '(': case ')':
     case '[': case ']': case '{': case '}':
-    return ret(ctx, punctuation(ctx));
+    return ret(ctx, pi(ctx));
 
     default: return ret(ctx, (Tok){Undefined, Fail});
 
