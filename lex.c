@@ -204,8 +204,10 @@ static inline Tok pi (Ctx *const ctx) {
 
 }
 
-// ## Routing
+// ## Main
 
+// ### Classification
+//
 // We classify an ASCII-character into one of eight categories, depending on
 // which type of token it may introduce. We use this information later to
 // dispatch into subfunctions.
@@ -225,7 +227,7 @@ static inline Tok pi (Ctx *const ctx) {
 // \end{array}
 // </script>
 
-static int classify (char c) {
+static inline int classify (char c) {
 
   switch (c) {
     case '"':                                  return String;
@@ -245,6 +247,8 @@ static int classify (char c) {
 
 }
 
+// ### Dispatch
+//
 // Based on the first character of the input buffer, we route the
 // tokenization process to a specific lexeme function.
 // We require that the length of our buffer is at least four characters, else
@@ -268,7 +272,9 @@ static int classify (char c) {
 
 void lex (Ctx *const ctx, const Cont ret) {
 
-  if (ctx->sz < 4) __builtin_unreachable();
+  if (ctx->sz < 4) {
+    __builtin_unreachable();
+  }
 
   switch (classify(ctx->buf[0])) {
     case String:      return ret(ctx, tau(ctx, String,    1, '"'));
