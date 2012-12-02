@@ -71,7 +71,7 @@ static inline bool is_whitespace (char c) {
   return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
 }
 
-static inline Tok alpha (int type, bool (*check)(char), Ctx *const ctx) {
+static inline Tok alpha (Ctx *const ctx, int type, bool (*check)(char)) {
 
   size_t len;
 
@@ -107,7 +107,7 @@ static inline Tok alpha (int type, bool (*check)(char), Ctx *const ctx) {
 // A preprocessor directive is introduced by a hash character (`#`) and end with
 // an unescaped newline.
 
-static inline Tok tau (int type, int plus, char termn, Ctx *const ctx) {
+static inline Tok tau (Ctx *const ctx, int type, int plus, char termn) {
 
   size_t len;
   bool   escape = false;
@@ -205,68 +205,84 @@ static inline Tok pi (Ctx *const ctx) {
 }
 
 // ## Routing
+
+// We classify an ASCII-character into one of eight categories, depending on
+// which type of token it may introduce. We use this information later to
+// dispatch into subfunctions.
 //
-// Based on the first character of the input buffer, we route the
-// tokenization process to a specific lexeme.
-// We require that the length of our buffer is at least four characters, else
-// the behaviour of this function is undefined.
-//
-// This function is a straight-forward implementatio of the following
-// mathematical description:
-//
-//<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-//<script type="math/tex">
-//\lambda (s) =
-//  \begin{cases}
-//    \langle\text{Undefined},\text{End},0\rangle  &\mbox{if } s_0 = 0  \\
-//    \tau   (\text{String},    1, 34)             &\mbox{if } s_0 = 34 \\
-//    \tau   (\text{Character}, 1, 39)             &\mbox{if } s_0 = 39 \\
-//    \tau   (\text{Directive}, 0, 35)             &\mbox{if } s_0 = 35 \\
-//    \nu    (\text{Number})                       &\mbox{if } s_0 \in N := \small{\{a \in \text{ASCII} : \text{$a$ is numerical}\}}        \\
-//    \alpha (\text{Whitespace}, S)                &\mbox{if } s_0 \in S := \small{\{a \in \text{ASCII} : \text{$a$ is whitespace}\}}       \\
-//    \alpha (\text{Identifier}, A \cup N)         &\mbox{if } s_0 \in A := \small{\{a \in \text{ASCII} : \text{$a$ is alphabetical}\}}     \\
-//    \pi    (\text{Punctuation})                  &\mbox{if } s_0 \in P := \small{\{a \in \text{ASCII} : \text{$a$ introd. punctuation}\}} \\
-//    \langle\text{Undefined},\text{Fail},0\rangle &\mbox{otherwise}
-//  \end{cases} \\
-//  \text{with:} \\
-//    N = [48,57] \\
-//    S = \{9,10,13,32\} \\
-//    A = [65, 122] \setminus \{91,92,93,94,96\} \\
-//    P = \{33,37,38\} \cup [40,47] \cup [58,63] \cup [91,94] \cup [123,126]
-//</script>
+// <script type="math/tex">
+// \begin{array}{lrl}
+//   T_S &:=& 34 \in \text{ASCII} \\
+//   T_C &:=& 39 \in \text{ASCII} \\
+//   T_D &:=& 35 \in \text{ASCII} \\
+//   N   &:=& \{a \in \text{ASCII} : \text{$a$ is numerical}\}    = [48,57] \\
+//   A_W &:=& \{a \in \text{ASCII} : \text{$a$ is whitespace}\}   = \{9,10,13,32\} \\
+//   A_I &:=& \{a \in \text{ASCII} : \text{$a$ is alphabetical}\} \\
+//        &=& [65, 122] \setminus \{91,92,93,94,96\} \\
+//   P   &:=& \{a \in \text{ASCII} : \text{$a$ introduces punctuation}\} \\
+//        &=& \{33,37,38\} \cup [40,47] \cup [58,63] \cup [91,94] \cup [123,126] \\
+//   U   &:=& \text{ASCII} \setminus (T_S \cup T_C \cup T_D \cup N \cup A_W \cup A_I \cup P)
+// \end{array}
+// </script>
 
-void lex (Ctx *const ctx, const Cont ret) {
+static int classify (char c) {
 
-  if (ctx->sz < 4) __builtin_unreachable();
-
-  switch (ctx->buf[0]) {
-
-    case '\0': return ret(ctx, (Tok){Undefined, End});
-
-    case '"':  return ret(ctx, tau(String,    1, '"',  ctx));
-    case '\'': return ret(ctx, tau(Character, 1, '\'', ctx));
-    case '#':  return ret(ctx, tau(Directive, 0, '\n', ctx));
-
-    case '0'...'9': return ret(ctx, nu(ctx));
-
-    case ' ':  case '\t':
-    case '\n': case '\r':
-    return ret(ctx, alpha(Whitespace, is_whitespace, ctx));
-
-    case 'A'...'Z':
-    case 'a'...'z': case '_':
-    return ret(ctx, alpha(Identifier, is_alnum, ctx));
-
+  switch (c) {
+    case '"':                                  return String;
+    case '\'':                                 return Character;
+    case '#':                                  return Directive;
+    case '0'...'9':                            return Number;
+    case ' ': case '\t': case '\n': case '\r': return Whitespace;
+    case 'A'...'Z': case 'a'...'z': case '_':  return Identifier;
     case ':': case '~': case '!': case '%':
     case '<': case '>': case '=': case '?':
     case '*': case '/': case '+': case '-':
     case '.': case '^': case '&': case '|':
     case ',': case ';': case '(': case ')':
-    case '[': case ']': case '{': case '}':
-    return ret(ctx, pi(ctx));
-
-    default: return ret(ctx, (Tok){Undefined, Fail});
-
+    case '[': case ']': case '{': case '}':    return Punctuation;
+    default:                                   return Undefined;
   }
 
 }
+
+// Based on the first character of the input buffer, we route the
+// tokenization process to a specific lexeme function.
+// We require that the length of our buffer is at least four characters, else
+// the behaviour of this function is undefined.
+//
+// <script type="math/tex">
+// \lambda (s, n) :=
+//   \begin{cases}
+//     \text{undefined}                             &\mbox{if } n < 4       \\
+//     \tau   (s, n, \text{String},    1, T_S)      &\mbox{if } s_0 = T_S   \\
+//     \tau   (s, n, \text{Character}, 1, T_C)      &\mbox{if } s_0 = T_C   \\
+//     \tau   (s, n, \text{Directive}, 0, T_D)      &\mbox{if } s_0 = T_D   \\
+//     \nu    (s, n, \text{Number})                 &\mbox{if } s_0 \in N   \\
+//     \alpha (s, n, \text{Whitespace}, A_S)        &\mbox{if } s_0 \in A_S \\
+//     \alpha (s, n, \text{Identifier}, A_I \cup N) &\mbox{if } s_0 \in A_I \\
+//     \pi    (s, n, \text{Punctuation})            &\mbox{if } s_0 \in P   \\
+//     \langle\text{Undefined},\text{End},0\rangle  &\mbox{if } s_0 = 0     \\
+//     \langle\text{Undefined},\text{Fail},0\rangle &\mbox{otherwise}
+//   \end{cases}
+// </script>
+
+void lex (Ctx *const ctx, const Cont ret) {
+
+  if (ctx->sz < 4) __builtin_unreachable();
+
+  switch (classify(ctx->buf[0])) {
+    case String:      return ret(ctx, tau(ctx, String,    1, '"'));
+    case Character:   return ret(ctx, tau(ctx, Character, 1, '\''));
+    case Directive:   return ret(ctx, tau(ctx, Directive, 0, '\n'));
+    case Number:      return ret(ctx, nu(ctx));
+    case Whitespace:  return ret(ctx, alpha(ctx, Whitespace, is_whitespace));
+    case Identifier:  return ret(ctx, alpha(ctx, Identifier, is_alnum));
+    case Punctuation: return ret(ctx, pi(ctx));
+    case Undefined:   return ret(ctx, (Tok){.state = ctx->buf[0] ? Fail : End});
+  }
+
+}
+
+// <script type="text/javascript"
+//         src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
+// </script>
