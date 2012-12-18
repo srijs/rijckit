@@ -110,22 +110,21 @@ static inline Tok alpha (Ctx *const ctx, int type, bool (*check)(char)) {
 static inline Tok tau (Ctx *const ctx, int type, int plus, char termn) {
 
   size_t len;
-  bool   escape = false;
+  bool escape = false;
+  char b = ctx->buf[1],
+       c = ctx->buf[2],
+       d = ctx->buf[3];
 
-  if (ctx->buf[1] == termn)
+  if (b == termn)
     return (Tok){type, Success, 1 + plus};
 
-  if (ctx->buf[2] == termn &&
-      ctx->buf[1] != '\\')
+  if (c == termn && b != '\\')
     return (Tok){type, Success, 2 + plus};
 
-  if (ctx->buf[3] == termn &&
-      ctx->buf[2] != '\\')
+  if (d == termn && c != '\\')
     return (Tok){type, Success, 3 + plus};
 
-  if (ctx->buf[3] == termn &&
-      ctx->buf[2] == '\\'  &&
-      ctx->buf[1] == '\\')
+  if (d == termn && c == '\\'  && b == '\\')
     return (Tok){type, Success, 3 + plus};
 
   for (len = 1; len < ctx->sz; len++) {
@@ -169,7 +168,7 @@ static inline Tok pi (Ctx *const ctx) {
        b = ctx->buf[1],
        c = ctx->buf[2];
 
-  switch (ctx->buf[0]) {
+  switch (a) {
 
     case '-':
     if unlikely (b == '>')
@@ -230,6 +229,7 @@ static inline Tok pi (Ctx *const ctx) {
 static inline int classify (char c) {
 
   switch (c) {
+
     case '"':                                  return String;
     case '\'':                                 return Character;
     case '#':                                  return Directive;
@@ -243,6 +243,7 @@ static inline int classify (char c) {
     case ',': case ';': case '(': case ')':
     case '[': case ']': case '{': case '}':    return Punctuation;
     default:                                   return Undefined;
+
   }
 
 }
@@ -277,6 +278,7 @@ void lex (Ctx *const ctx, const Cont ret) {
   }
 
   switch (classify(ctx->buf[0])) {
+
     case String:      return ret(ctx, tau(ctx, String,    1, '"'));
     case Character:   return ret(ctx, tau(ctx, Character, 1, '\''));
     case Directive:   return ret(ctx, tau(ctx, Directive, 0, '\n'));
@@ -285,6 +287,7 @@ void lex (Ctx *const ctx, const Cont ret) {
     case Identifier:  return ret(ctx, alpha(ctx, Identifier, is_alnum));
     case Punctuation: return ret(ctx, pi(ctx));
     case Undefined:   return ret(ctx, (Tok){.state = ctx->buf[0] ? Fail : End});
+
   }
 
 }
