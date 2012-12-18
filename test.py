@@ -8,10 +8,12 @@ with open('lex.hi') as header:
 
 STATE = True
 
+TOKENS = []
+
 @ffi.callback('Cont')
 def printTok(context, token):
 
-  global STATE
+  global STATE, TOKENS
 
   def refill():
     context.sz += stdin.readinto(ffi.buffer(context.buf + context.sz, context.back_sz - context.sz))
@@ -20,7 +22,7 @@ def printTok(context, token):
       context.sz += 1
 
   if token.state == 'Success':
-    print '%s %s: %s' % (token.type, token.len, ffi.string(context.buf, token.len))
+    TOKENS.append((token.type, ffi.buffer(context.buf, token.len)[:].encode("string-escape")))
     context.buf += token.len
     context.sz  -= token.len
     if context.sz < 4:
@@ -39,7 +41,6 @@ def printTok(context, token):
     STATE = False
 
   elif token.state == 'End':
-    print 'End'
     STATE = False
 
 Lex = ffi.dlopen('./liblex.so')
@@ -51,3 +52,6 @@ ctx.sz = stdin.readinto(ffi.buffer(buf, ctx.back_sz))
 
 while STATE:
   Lex.lex(ctx, printTok)
+
+for t in TOKENS:
+  print '%s: %s' % t
