@@ -236,12 +236,9 @@ static inline int classify (char c) {
     case '0'...'9':                            return Number;
     case ' ': case '\t': case '\n': case '\r': return Whitespace;
     case 'A'...'Z': case 'a'...'z': case '_':  return Identifier;
-    case ':': case '~': case '!': case '%':
-    case '<': case '>': case '=': case '?':
-    case '*': case '/': case '+': case '-':
-    case '.': case '^': case '&': case '|':
-    case ',': case ';': case '(': case ')':
-    case '[': case ']': case '{': case '}':    return Punctuation;
+    case '!': case '%': case '&':
+    case '('...'/': case ':'...'?':
+    case '['...'^': case '{'...'~':            return Punctuation;
     default:                                   return Undefined;
 
   }
