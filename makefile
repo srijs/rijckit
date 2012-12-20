@@ -2,7 +2,7 @@
 
 lib: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o
-	$(CC) -shared lex.o -o liblex.so
+	$(CC) -shared -nostdlib lex.o -o liblex.so
 
 run: lib
 	cpp < lex.h > lex.hi
@@ -10,7 +10,7 @@ run: lib
 	rm lex.hi
 
 verify: lex.h lex.c
-	$(CC) -std=c99 -O3 lex.c -S -o .asm.s
+	$(CC) -std=c99 -Os lex.c -S -o .asm.s
 	cat .asm.s | grep call | wc -l
 	cat .asm.s | grep j | wc -l
 	rm .asm.s
