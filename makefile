@@ -4,6 +4,10 @@ lib: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o
 	$(CC) -shared -nostdlib lex.o -o liblex.so
 
+bench: lex.h lex.c
+	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o -DBENCH
+	$(CC) -shared -nostdlib lex.o -o liblex.so
+
 run: lib
 	cpp < lex.h > lex.hi
 	python test.py < lex.c

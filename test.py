@@ -11,7 +11,7 @@ STATE = True
 TOKENS = []
 
 @ffi.callback('Cont')
-def printTok(context, token):
+def printTok(context, token, cycles):
 
   global STATE, TOKENS
 
@@ -22,7 +22,7 @@ def printTok(context, token):
       context.sz += 1
 
   if token.state == 'Success':
-    TOKENS.append((token.type, ffi.buffer(context.buf, token.len)[:].encode("string-escape")))
+    TOKENS.append((token.type, ffi.buffer(context.buf, token.len)[:].encode("string-escape"), cycles))
     context.buf += token.len
     context.sz  -= token.len
     if context.sz < 4:
@@ -53,5 +53,12 @@ ctx.sz = stdin.readinto(ffi.buffer(buf, ctx.back_sz))
 while STATE:
   Lex.lex(ctx, printTok)
 
+x_length = []
+y_cycles = []
+z_type = []
+
 for t in TOKENS:
-  print '%s: %s' % t
+  print '%s: %s %d' % t
+  x_length.append(len(t[1]))
+  y_cycles.append(t[2])
+  z_type.append(t[0])

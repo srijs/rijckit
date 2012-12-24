@@ -197,9 +197,9 @@ static inline Tok pi (Ctx *const ctx) {
     }
     return (Tok){Punctuation, Success, 1 + (b == '=')};
 
-  }
+    default: __builtin_unreachable();
 
-  __builtin_unreachable();
+  }
 
 }
 
@@ -230,16 +230,18 @@ static inline int classify (char c) {
 
   switch (c) {
 
-    case '"':                                  return String;
-    case '\'':                                 return Character;
-    case '#':                                  return Directive;
-    case '0'...'9':                            return Number;
-    case ' ': case '\t': case '\n': case '\r': return Whitespace;
-    case 'A'...'Z': case 'a'...'z': case '_':  return Identifier;
+    case '"':                       return String;
+    case '\'':                      return Character;
+    case '#':                       return Directive;
+    case '0'...'9':                 return Number;
+    case ' ': case '\t':
+    case '\n': case '\r':           return Whitespace;
+    case 'A'...'Z':
+    case 'a'...'z': case '_':       return Identifier;
     case '!': case '%': case '&':
     case '('...'/': case ':'...'?':
-    case '['...'^': case '{'...'~':            return Punctuation;
-    default:                                   return Undefined;
+    case '['...'^': case '{'...'~': return Punctuation;
+    default:                        return Undefined;
 
   }
 
@@ -253,7 +255,7 @@ static inline int classify (char c) {
 // the behaviour of this function is undefined.
 //
 // <script type="math/tex">
-// \lambda (s, n) :=
+// \delta (s, n) :=
 //   \begin{cases}
 //     \text{undefined}                             &\mbox{if } n < 4       \\
 //     \tau   (s, n, \text{String},    1, T_S)      &\mbox{if } s_0 = T_S   \\
@@ -268,7 +270,7 @@ static inline int classify (char c) {
 //   \end{cases}
 // </script>
 
-void lex (Ctx *const ctx, const Cont ret) {
+static inline Tok dispatch (Ctx *const ctx) {
 
   if (ctx->sz < 4) {
     __builtin_unreachable();
@@ -276,16 +278,37 @@ void lex (Ctx *const ctx, const Cont ret) {
 
   switch (classify(ctx->buf[0])) {
 
-    case String:      return ret(ctx, tau(ctx, String,    1, '"'));
-    case Character:   return ret(ctx, tau(ctx, Character, 1, '\''));
-    case Directive:   return ret(ctx, tau(ctx, Directive, 0, '\n'));
-    case Number:      return ret(ctx, nu(ctx));
-    case Whitespace:  return ret(ctx, alpha(ctx, Whitespace, is_whitespace));
-    case Identifier:  return ret(ctx, alpha(ctx, Identifier, is_alnum));
-    case Punctuation: return ret(ctx, pi(ctx));
-    case Undefined:   return ret(ctx, (Tok){.state = ctx->buf[0] ? Fail : End});
+    case String:      return tau(ctx, String,    1, '"');
+    case Character:   return tau(ctx, Character, 1, '\'');
+    case Directive:   return tau(ctx, Directive, 0, '\n');
+    case Number:      return nu(ctx);
+    case Whitespace:  return alpha(ctx, Whitespace, is_whitespace);
+    case Identifier:  return alpha(ctx, Identifier, is_alnum);
+    case Punctuation: return pi(ctx);
+    case Undefined:   return (Tok){.state = ctx->buf[0] ? Fail : End};
+    default:          __builtin_unreachable();
 
   }
+
+}
+
+// ### Lex
+
+void lex (Ctx *const ctx, const Cont ret) {
+
+  unsigned long long t0 = 0, t1 = 0;
+
+  #ifdef BENCH
+    t0 = __builtin_readcyclecounter();
+  #endif
+
+  Tok t = dispatch(ctx);
+
+  #ifdef BENCH
+    t1 = __builtin_readcyclecounter();
+  #endif
+
+  return ret(ctx, t, t1 - t0);
 
 }
 

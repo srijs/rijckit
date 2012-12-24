@@ -8,10 +8,7 @@
 #define NS(id) id
 #endif
 
-
-
 // ## Fundamental Types
-
 
 // ### Context Structure
 // The context of our lexer includes two kinds of buffers:
@@ -56,14 +53,11 @@ typedef struct {
 
 typedef void (*NS(Cont))
   (NS(Ctx) *const,
-   const NS(Tok));
-
-
+   const NS(Tok),
+   unsigned long long);
 
 // ## Interface
 
 void lex(NS(Ctx) *const, const NS(Cont));
-
-
 
 #undef NS
