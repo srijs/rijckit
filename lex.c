@@ -38,11 +38,11 @@
 // ### Lexeme: Number
 // Stub.
 
-static inline Tok nu (Ctx *const ctx) {
+static inline Tok nu (size_t sz, char *buf) {
 
   size_t len;
-  for (len = 1; len < ctx->sz; len++) {
-    if (ctx->buf[len] < '0' || ctx->buf[len] > '9') {
+  for (len = 1; len < sz; len++) {
+    if (buf[len] < '0' || buf[len] > '9') {
       return (Tok){Number, Success, len};
     }
   }
@@ -71,21 +71,21 @@ static inline bool is_whitespace (char c) {
   return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
 }
 
-static inline Tok alpha (Ctx *const ctx, int type, bool (*check)(char)) {
+static inline Tok alpha (size_t sz, char *buf, int type, bool (*check)(char)) {
 
   size_t len;
 
-  if (check(ctx->buf[1]) == 0)
+  if (check(buf[1]) == 0)
     return (Tok){type, Success, 1};
 
-  if (check(ctx->buf[2]) == 0)
+  if (check(buf[2]) == 0)
     return (Tok){type, Success, 2};
 
-  if (check(ctx->buf[3]) == 0)
+  if (check(buf[3]) == 0)
     return (Tok){type, Success, 3};
 
-  for (len = 4; len < ctx->sz; len++) {
-    if (check(ctx->buf[len]) == 0) return (Tok){type, Success, len};
+  for (len = 4; len < sz; len++) {
+    if (check(buf[len]) == 0) return (Tok){type, Success, len};
   }
 
   return (Tok){type, Undecided};
@@ -107,13 +107,11 @@ static inline Tok alpha (Ctx *const ctx, int type, bool (*check)(char)) {
 // A preprocessor directive is introduced by a hash character (`#`) and end with
 // an unescaped newline.
 
-static inline Tok tau (Ctx *const ctx, int type, int plus, char termn) {
+static inline Tok tau (size_t sz, char *buf, int type, int plus, char termn) {
 
   size_t len;
   bool escape = false;
-  char b = ctx->buf[1],
-       c = ctx->buf[2],
-       d = ctx->buf[3];
+  char b = buf[1], c = buf[2], d = buf[3];
 
   if (b == termn)
     return (Tok){type, Success, 1 + plus};
@@ -127,10 +125,10 @@ static inline Tok tau (Ctx *const ctx, int type, int plus, char termn) {
   if (d == termn && c == '\\'  && b == '\\')
     return (Tok){type, Success, 3 + plus};
 
-  for (len = 1; len < ctx->sz; len++) {
+  for (len = 1; len < sz; len++) {
     if (escape == false) {
-      if (ctx->buf[len] == termn) return (Tok){type, Success, len + plus};
-      if (ctx->buf[len] == '\\')  escape = true;
+      if (buf[len] == termn) return (Tok){type, Success, len + plus};
+      if (buf[len] == '\\')  escape = true;
     }
     else escape = false;
   }
@@ -161,12 +159,10 @@ static inline Tok tau (Ctx *const ctx, int type, int plus, char termn) {
 // been matched and returned from the function, we can declare the following
 // codepath as undefined.
 
-static inline Tok pi (Ctx *const ctx) {
+static inline Tok pi (size_t sz, char *buf) {
 
   size_t len;
-  char a = ctx->buf[0],
-       b = ctx->buf[1],
-       c = ctx->buf[2];
+  char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
 
@@ -190,8 +186,8 @@ static inline Tok pi (Ctx *const ctx) {
 
     case '/':
     if unlikely (b == '/') {
-      for (len = 2; len < ctx->sz; len++)
-        if unlikely (ctx->buf[len] == '\n' | ctx->buf[len] == '\r')
+      for (len = 2; len < sz; len++)
+        if unlikely (buf[len] == '\n' | buf[len] == '\r')
           return (Tok){Punctuation, Success, len};
       return (Tok){Punctuation, Undecided};
     }
@@ -255,37 +251,37 @@ static inline int classify (char c) {
 // the behaviour of this function is undefined.
 //
 // <script type="math/tex">
-// \delta (s, n) :=
+// \delta (n, s) :=
 //   \begin{cases}
 //     \text{undefined}                             &\mbox{if } n < 4       \\
-//     \tau   (s, n, \text{String},    1, T_S)      &\mbox{if } s_0 = T_S   \\
-//     \tau   (s, n, \text{Character}, 1, T_C)      &\mbox{if } s_0 = T_C   \\
-//     \tau   (s, n, \text{Directive}, 0, T_D)      &\mbox{if } s_0 = T_D   \\
-//     \nu    (s, n, \text{Number})                 &\mbox{if } s_0 \in N   \\
-//     \alpha (s, n, \text{Whitespace}, A_S)        &\mbox{if } s_0 \in A_S \\
-//     \alpha (s, n, \text{Identifier}, A_I \cup N) &\mbox{if } s_0 \in A_I \\
-//     \pi    (s, n, \text{Punctuation})            &\mbox{if } s_0 \in P   \\
+//     \tau   (n, s, \text{String},    1, T_S)      &\mbox{if } s_0 = T_S   \\
+//     \tau   (n, s, \text{Character}, 1, T_C)      &\mbox{if } s_0 = T_C   \\
+//     \tau   (n, s, \text{Directive}, 0, T_D)      &\mbox{if } s_0 = T_D   \\
+//     \nu    (n, s, \text{Number})                 &\mbox{if } s_0 \in N   \\
+//     \alpha (n, s, \text{Whitespace}, A_S)        &\mbox{if } s_0 \in A_S \\
+//     \alpha (n, s, \text{Identifier}, A_I \cup N) &\mbox{if } s_0 \in A_I \\
+//     \pi    (n, s, \text{Punctuation})            &\mbox{if } s_0 \in P   \\
 //     \langle\text{Undefined},\text{End},0\rangle  &\mbox{if } s_0 = 0     \\
 //     \langle\text{Undefined},\text{Fail},0\rangle &\mbox{otherwise}
 //   \end{cases}
 // </script>
 
-static inline Tok dispatch (Ctx *const ctx) {
+static inline Tok dispatch (size_t sz, char *buf) {
 
-  if (ctx->sz < 4) {
+  if (sz < 4) {
     __builtin_unreachable();
   }
 
-  switch (classify(ctx->buf[0])) {
+  switch (classify(buf[0])) {
 
-    case String:      return tau(ctx, String,    1, '"');
-    case Character:   return tau(ctx, Character, 1, '\'');
-    case Directive:   return tau(ctx, Directive, 0, '\n');
-    case Number:      return nu(ctx);
-    case Whitespace:  return alpha(ctx, Whitespace, is_whitespace);
-    case Identifier:  return alpha(ctx, Identifier, is_alnum);
-    case Punctuation: return pi(ctx);
-    case Undefined:   return (Tok){.state = ctx->buf[0] ? Fail : End};
+    case String:      return tau(sz, buf, String,    1, '"');
+    case Character:   return tau(sz, buf, Character, 1, '\'');
+    case Directive:   return tau(sz, buf, Directive, 0, '\n');
+    case Number:      return nu(sz, buf);
+    case Whitespace:  return alpha(sz, buf, Whitespace, is_whitespace);
+    case Identifier:  return alpha(sz, buf, Identifier, is_alnum);
+    case Punctuation: return pi(sz, buf);
+    case Undefined:   return (Tok){.state = buf[0] ? Fail : End};
     default:          __builtin_unreachable();
 
   }
@@ -302,7 +298,7 @@ void lex (Ctx *const ctx, const Cont ret) {
     t0 = __builtin_readcyclecounter();
   #endif
 
-  Tok t = dispatch(ctx);
+  Tok t = dispatch(ctx->sz, ctx->buf);
 
   #ifdef BENCH
     t1 = __builtin_readcyclecounter();
