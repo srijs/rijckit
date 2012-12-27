@@ -6,52 +6,47 @@ ffi = FFI()
 with open('lex.hi') as header:
   ffi.cdef(header.read())
 
-STATE = True
-
 TOKENS = []
-
-@ffi.callback('Cont')
-def printTok(context, token, cycles):
-
-  global STATE, TOKENS
-
-  def refill():
-    context.sz += stdin.readinto(ffi.buffer(context.buf + context.sz, context.back_sz - context.sz))
-    while context.sz < 4:
-      context.buf[context.sz] = '\0'
-      context.sz += 1
-
-  if token.state == 'Success':
-    TOKENS.append((token.type, ffi.buffer(context.buf, token.len)[:].encode("string-escape"), cycles))
-    context.buf += token.len
-    context.sz  -= token.len
-    if context.sz < 4:
-      refill()
-
-  elif token.state == 'Undecided':
-    if context.sz < context.back_sz:
-      ffi.buffer(context.back_buf, context.sz)[:] = ffi.buffer(context.buf, context.sz)[:]
-      context.buf = context.back_buf
-      refill()
-    else:
-      STATE = False
-
-  elif token.state == 'Fail':
-    print 'Fail, Tok: %s, Char: %s' % (token.type, buf[0])
-    STATE = False
-
-  elif token.state == 'End':
-    STATE = False
 
 Lex = ffi.dlopen('./liblex.so')
 
+tok = ffi.new('Tok *')
 buf = ffi.new('char[]', 4096)
 ctx = ffi.new('Ctx *', [4096, 4096, buf, buf])
 
 ctx.sz = stdin.readinto(ffi.buffer(buf, ctx.back_sz))
 
-while STATE:
-  Lex.lex(ctx, printTok)
+run = True
+while run:
+  ret = Lex.lex(ctx, tok)
+
+  def refill():
+    ctx.sz += stdin.readinto(ffi.buffer(ctx.buf + ctx.sz, ctx.back_sz - ctx.sz))
+    while ctx.sz < 4:
+      ctx.buf[ctx.sz] = '\0'
+      ctx.sz += 1
+
+  if ret.state == 'Success':
+    TOKENS.append((tok.type, ffi.buffer(ctx.buf, tok.len)[:].encode("string-escape"), ret.t))
+    ctx.buf += tok.len
+    ctx.sz  -= tok.len
+    if ctx.sz < 4:
+      refill()
+
+  elif ret.state == 'Undecided':
+    if ctx.sz < ctx.back_sz:
+      ffi.buffer(ctx.back_buf, ctx.sz)[:] = ffi.buffer(ctx.buf, ctx.sz)[:]
+      ctx.buf = ctx.back_buf
+      refill()
+    else:
+      run = False
+
+  elif ret.state == 'Fail':
+    print 'Fail, Tok: %s, Char: %s' % (tok.type, buf[0])
+    run = False
+
+  elif ret.state == 'End':
+    run = False
 
 x_length = []
 y_cycles = []

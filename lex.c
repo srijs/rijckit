@@ -33,20 +33,21 @@
 // To provide good readability and understandability, the functionality of the
 // lexer as a whole is factored into its individual lexemes. Each of those is
 // provided as a static function, taking the current context of the lexing
-// process as a parameter and returning the matched token structure.
+// process as a parameter, writing the matched token structure and returning
+// its state.
 
 // ### Lexeme: Number
 // Stub.
 
-static inline Tok nu (size_t sz, char *buf) {
+static inline State nu (Tok *tok, size_t sz, char *buf) {
 
   size_t len;
   for (len = 1; len < sz; len++) {
     if (buf[len] < '0' || buf[len] > '9') {
-      return (Tok){Number, Success, len};
+      return (*tok = (Tok){Number, len}, Success);
     }
   }
-  return (Tok){Number, Undecided};
+  return (*tok = (Tok){Number, Undecided}, Undecided);
 
 }
 
@@ -71,24 +72,24 @@ static inline bool is_whitespace (char c) {
   return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
 }
 
-static inline Tok alpha (size_t sz, char *buf, int type, bool (*check)(char)) {
+static inline State alpha (Tok *tok, size_t sz, char *buf, int type, bool (*check)(char)) {
 
   size_t len;
 
   if (check(buf[1]) == 0)
-    return (Tok){type, Success, 1};
+    return (*tok = (Tok){type, 1}, Success);
 
   if (check(buf[2]) == 0)
-    return (Tok){type, Success, 2};
+    return (*tok = (Tok){type, 2}, Success);
 
   if (check(buf[3]) == 0)
-    return (Tok){type, Success, 3};
+    return (*tok = (Tok){type, 3}, Success);
 
   for (len = 4; len < sz; len++) {
-    if (check(buf[len]) == 0) return (Tok){type, Success, len};
+    if (check(buf[len]) == 0) return (*tok = (Tok){type, len}, Success);
   }
 
-  return (Tok){type, Undecided};
+  return (*tok = (Tok){type}, Undecided);
 
 }
 
@@ -107,33 +108,33 @@ static inline Tok alpha (size_t sz, char *buf, int type, bool (*check)(char)) {
 // A preprocessor directive is introduced by a hash character (`#`) and end with
 // an unescaped newline.
 
-static inline Tok tau (size_t sz, char *buf, int type, int plus, char termn) {
+static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, char termn) {
 
   size_t len;
   bool escape = false;
   char b = buf[1], c = buf[2], d = buf[3];
 
   if (b == termn)
-    return (Tok){type, Success, 1 + plus};
+    return (*tok = (Tok){type, 1 + plus}, Success);
 
   if (c == termn && b != '\\')
-    return (Tok){type, Success, 2 + plus};
+    return (*tok = (Tok){type, 2 + plus}, Success);
 
   if (d == termn && c != '\\')
-    return (Tok){type, Success, 3 + plus};
+    return (*tok = (Tok){type, 3 + plus}, Success);
 
   if (d == termn && c == '\\'  && b == '\\')
-    return (Tok){type, Success, 3 + plus};
+    return (*tok = (Tok){type, 3 + plus}, Success);
 
   for (len = 1; len < sz; len++) {
     if (escape == false) {
-      if (buf[len] == termn) return (Tok){type, Success, len + plus};
+      if (buf[len] == termn) return (*tok = (Tok){type, len + plus}, Success);
       if (buf[len] == '\\')  escape = true;
     }
     else escape = false;
   }
 
-  return (Tok){type, Undecided};
+  return (*tok = (Tok){type, Undecided}, Undecided);
 
 }
 
@@ -159,7 +160,7 @@ static inline Tok tau (size_t sz, char *buf, int type, int plus, char termn) {
 // been matched and returned from the function, we can declare the following
 // codepath as undefined.
 
-static inline Tok pi (size_t sz, char *buf) {
+static inline State pi (Tok *tok, size_t sz, char *buf) {
 
   size_t len;
   char a = buf[0], b = buf[1], c = buf[2];
@@ -168,30 +169,30 @@ static inline Tok pi (size_t sz, char *buf) {
 
     case '-':
     if unlikely (b == '>')
-      return (Tok){Punctuation, Success, 2};
+      return (*tok = (Tok){Punctuation, 2}, Success);
     case '&': case '<': case '>':
     case '|': case '+':
     if unlikely (b == a)
-      return (Tok){Punctuation, Success, 2 + ((a == '<' | a == '>') & (c == '='))};
+      return (*tok = (Tok){Punctuation, 2 + ((a == '<' | a == '>') & (c == '='))}, Success);
     case '^': case '=': case '*':
     case '%': case '!':
-    return (Tok){Punctuation, Success, 1 + (b == '=')};
+    return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
 
     case '?':
-    return (Tok){Punctuation, Success, 1 + (b == ':')};
+    return (*tok = (Tok){Punctuation, 1 + (b == ':')}, Success);
 
     case '(': case ')': case '[': case ']': case '.':
     case '{': case '}': case ':': case ';': case ',': case '~':
-    return (Tok){Punctuation, Success, 1 + 2 * (a == '.' & b == '.' & c == '.')};
+    return (*tok = (Tok){Punctuation, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
 
     case '/':
     if unlikely (b == '/') {
       for (len = 2; len < sz; len++)
         if unlikely (buf[len] == '\n' | buf[len] == '\r')
-          return (Tok){Punctuation, Success, len};
-      return (Tok){Punctuation, Undecided};
+          return (*tok = (Tok){Punctuation, len}, Success);
+      return (*tok = (Tok){Punctuation, Undecided}, Undecided);
     }
-    return (Tok){Punctuation, Success, 1 + (b == '=')};
+    return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
 
     default: __builtin_unreachable();
 
@@ -266,7 +267,7 @@ static inline int classify (char c) {
 //   \end{cases}
 // </script>
 
-static inline Tok dispatch (size_t sz, char *buf) {
+static inline State dispatch (Tok *tok, size_t sz, char *buf) {
 
   if (sz < 4) {
     __builtin_unreachable();
@@ -274,14 +275,14 @@ static inline Tok dispatch (size_t sz, char *buf) {
 
   switch (classify(buf[0])) {
 
-    case String:      return tau(sz, buf, String,    1, '"');
-    case Character:   return tau(sz, buf, Character, 1, '\'');
-    case Directive:   return tau(sz, buf, Directive, 0, '\n');
-    case Number:      return nu(sz, buf);
-    case Whitespace:  return alpha(sz, buf, Whitespace, is_whitespace);
-    case Identifier:  return alpha(sz, buf, Identifier, is_alnum);
-    case Punctuation: return pi(sz, buf);
-    case Undefined:   return (Tok){.state = buf[0] ? Fail : End};
+    case String:      return tau(tok, sz, buf, String,    1, '"');
+    case Character:   return tau(tok, sz, buf, Character, 1, '\'');
+    case Directive:   return tau(tok, sz, buf, Directive, 0, '\n');
+    case Number:      return nu(tok, sz, buf);
+    case Whitespace:  return alpha(tok, sz, buf, Whitespace, is_whitespace);
+    case Identifier:  return alpha(tok, sz, buf, Identifier, is_alnum);
+    case Punctuation: return pi(tok, sz, buf);
+    case Undefined:   return (buf[0] ? Fail : End);
     default:          __builtin_unreachable();
 
   }
@@ -290,7 +291,7 @@ static inline Tok dispatch (size_t sz, char *buf) {
 
 // ### Lex
 
-void lex (Ctx *const ctx, const Cont ret) {
+Return lex (Ctx *const ctx, Tok *token) {
 
   unsigned long long t0 = 0, t1 = 0;
 
@@ -298,13 +299,13 @@ void lex (Ctx *const ctx, const Cont ret) {
     t0 = __builtin_readcyclecounter();
   #endif
 
-  Tok t = dispatch(ctx->sz, ctx->buf);
+  State s = dispatch(token, ctx->sz, ctx->buf);
 
   #ifdef BENCH
     t1 = __builtin_readcyclecounter();
   #endif
 
-  return ret(ctx, t, t1 - t0);
+  return (Return){s, t1 - t0};
 
 }
 

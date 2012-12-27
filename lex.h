@@ -29,6 +29,16 @@ typedef struct {
 // `Identifier` token type. All kinds of punctuations have a common
 // type, comments are also understood as punctuation.
 
+typedef enum {
+  NS(Success), NS(Fail),
+  NS(Undecided), NS(End)
+} NS(State);
+
+typedef struct {
+  NS(State) state;
+  unsigned long long int t;
+} NS(Return);
+
 typedef struct {
   enum {
     NS(Undefined),
@@ -40,10 +50,6 @@ typedef struct {
     NS(Punctuation),
     NS(Directive)
   } type;
-  enum {
-    NS(Success), NS(Fail),
-    NS(Undecided), NS(End)
-  } state;
   size_t len;
 } NS(Tok);
 
@@ -58,6 +64,6 @@ typedef void (*NS(Cont))
 
 // ## Interface
 
-void lex(NS(Ctx) *const, const NS(Cont));
+NS(Return) lex(NS(Ctx) *const, NS(Tok) *);
 
 #undef NS
