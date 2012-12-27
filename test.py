@@ -1,6 +1,10 @@
 from cffi import FFI
 from sys import stdin
 
+from copy import copy
+
+from matplotlib import pyplot as plt
+
 ffi = FFI()
 
 with open('lex.hi') as header:
@@ -27,7 +31,7 @@ while run:
       ctx.sz += 1
 
   if ret.state == 'Success':
-    TOKENS.append((tok.type, ffi.buffer(ctx.buf, tok.len)[:].encode("string-escape"), ret.t))
+    TOKENS.append((copy(tok.type), ffi.buffer(ctx.buf, tok.len)[:].encode("string-escape"), ret.t, ret.t / tok.len))
     ctx.buf += tok.len
     ctx.sz  -= tok.len
     if ctx.sz < 4:
@@ -48,12 +52,19 @@ while run:
   elif ret.state == 'End':
     run = False
 
-x_length = []
-y_cycles = []
-z_type = []
+x_length     = []
+y_cycles     = []
+y_throughput = []
+z_type       = []
 
 for t in TOKENS:
-  print '%s: %s %d' % t
+  print '%s: %s %d %d' % t
   x_length.append(len(t[1]))
   y_cycles.append(t[2])
+  y_throughput.append(t[3])
   z_type.append(t[0])
+
+print 'Scattering...'
+plt.scatter(x_length, y_cycles, c = 'b')
+plt.scatter(x_length, y_throughput, c = 'r')
+plt.show()
