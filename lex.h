@@ -53,15 +53,6 @@ typedef struct {
   size_t len;
 } NS(Tok);
 
-// ### Continuation Type
-// Since we'll program in Continuation-Passing-Style, we define the
-// type of our continuation.
-
-typedef void (*NS(Cont))
-  (NS(Ctx) *const,
-   const NS(Tok),
-   unsigned long long);
-
 // ## Interface
 
 NS(Return) lex(NS(Ctx) *const, NS(Tok) *);
