@@ -47,7 +47,7 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
       return (*tok = (Tok){Number, len}, Success);
     }
   }
-  return (*tok = (Tok){Number, Undecided}, Undecided);
+  return (*tok = (Tok){Number}, Undecided);
 
 }
 
@@ -134,7 +134,7 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
     else escape = false;
   }
 
-  return (*tok = (Tok){type, Undecided}, Undecided);
+  return (*tok = (Tok){type}, Undecided);
 
 }
 
@@ -190,7 +190,7 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
       for (len = 2; len < sz; len++)
         if unlikely (buf[len] == '\n' | buf[len] == '\r')
           return (*tok = (Tok){Punctuation, len}, Success);
-      return (*tok = (Tok){Punctuation, Undecided}, Undecided);
+      return (*tok = (Tok){Punctuation}, Undecided);
     }
     return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
 
