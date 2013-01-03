@@ -162,7 +162,6 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
 
 static inline State pi (Tok *tok, size_t sz, char *buf) {
 
-  size_t len;
   char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
@@ -186,13 +185,8 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
     return (*tok = (Tok){Punctuation, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
 
     case '/':
-    if unlikely (b == '/') {
-      for (len = 2; len < sz; len++)
-        if unlikely (buf[len] == '\n' | buf[len] == '\r')
-          return (*tok = (Tok){Punctuation, len}, Success);
-      return (*tok = (Tok){Punctuation}, Undecided);
-    }
-    return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
+    if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], Punctuation, 2, '\n');
+    else                   return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
 
     default: __builtin_unreachable();
 
