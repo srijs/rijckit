@@ -16,7 +16,6 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#include <string.h>
 
 // Type-declarations and interfaces of this lexer are found in the `lex.h`
 // header file.
@@ -28,6 +27,20 @@
 
 #define likely(x)   (__builtin_expect(x, true))
 #define unlikely(x) (__builtin_expect(x, false))
+
+// ## Utils
+//
+// To provide radical independence of this library, we write some standard-
+// functions ourselves.
+
+static inline void copy_fwd (char *dst, const char *src, size_t len) {
+
+  size_t i;
+  for (i = 0; i < len; i++) {
+    dst[i] = src[i];
+  }
+
+}
 
 // ## Lexemes
 //
@@ -307,7 +320,7 @@ Return lex (Ctx *const ctx, Tok *token) {
   }
 
   if (s == Undecided) {
-    memmove(ctx->back_buf, ctx->buf, ctx->sz);
+    copy_fwd(ctx->back_buf, ctx->buf, ctx->sz);
     ctx->buf = ctx->back_buf;
   }
 
