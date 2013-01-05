@@ -303,21 +303,17 @@ Return lex (Ctx *const ctx, Tok *token) {
 
   unsigned long long t0 = 0, t1 = 0;
 
-  State s = Undecided;
+  State s;
 
-  if (ctx->sz >= 4) {
+  #ifdef BENCH
+  t0 = __builtin_readcyclecounter();
+  #endif
 
-    #ifdef BENCH
-      t0 = __builtin_readcyclecounter();
-    #endif
+  s = (ctx->sz >= 4) ? dispatch(token, ctx->sz, ctx->buf) : Undecided;
 
-    s = dispatch(token, ctx->sz, ctx->buf);
-
-    #ifdef BENCH
-      t1 = __builtin_readcyclecounter();
-    #endif
-
-  }
+  #ifdef BENCH
+  t1 = __builtin_readcyclecounter();
+  #endif
 
   if (s == Undecided) {
     copy_fwd(ctx->back_buf, ctx->buf, ctx->sz);
@@ -326,8 +322,8 @@ Return lex (Ctx *const ctx, Tok *token) {
 
   if (s == Success) {
     token->ptr = ctx->buf;
-    ctx->buf += token->len;
-    ctx->sz  -= token->len;
+    ctx->buf  += token->len;
+    ctx->sz   -= token->len;
   }
 
   return (Return){s, t1 - t0};
