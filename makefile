@@ -2,11 +2,11 @@
 
 lib: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o
-	$(CC) -shared lex.o -o liblex.so
+	$(CC) -nostdlib -shared lex.o -o liblex.so
 
 bench: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o -DBENCH
-	$(CC) -shared lex.o -o liblex.so
+	$(CC) -nostdlib -shared lex.o -o liblex.so
 
 run: lib
 	cpp < lex.h > lex.hi
