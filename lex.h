@@ -50,6 +50,7 @@ typedef struct {
     NS(Punctuation),
     NS(Directive)
   } type;
+  char *ptr;
   size_t len;
 } NS(Tok);
 

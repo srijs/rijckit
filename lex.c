@@ -44,7 +44,7 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
   size_t len;
   for (len = 1; len < sz; len++) {
     if (buf[len] < '0' || buf[len] > '9') {
-      return (*tok = (Tok){Number, len}, Success);
+      return (*tok = (Tok){Number, buf, len}, Success);
     }
   }
   return (*tok = (Tok){Number}, Undecided);
@@ -77,16 +77,16 @@ static inline State alpha (Tok *tok, size_t sz, char *buf, int type, bool (*chec
   size_t len;
 
   if (check(buf[1]) == 0)
-    return (*tok = (Tok){type, 1}, Success);
+    return (*tok = (Tok){type, buf, 1}, Success);
 
   if (check(buf[2]) == 0)
-    return (*tok = (Tok){type, 2}, Success);
+    return (*tok = (Tok){type, buf, 2}, Success);
 
   if (check(buf[3]) == 0)
-    return (*tok = (Tok){type, 3}, Success);
+    return (*tok = (Tok){type, buf, 3}, Success);
 
   for (len = 4; len < sz; len++) {
-    if (check(buf[len]) == 0) return (*tok = (Tok){type, len}, Success);
+    if (check(buf[len]) == 0) return (*tok = (Tok){type, buf, len}, Success);
   }
 
   return (*tok = (Tok){type}, Undecided);
@@ -115,20 +115,20 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
   char b = buf[1], c = buf[2], d = buf[3];
 
   if (b == termn)
-    return (*tok = (Tok){type, 1 + plus}, Success);
+    return (*tok = (Tok){type, buf, 1 + plus}, Success);
 
   if (c == termn && b != '\\')
-    return (*tok = (Tok){type, 2 + plus}, Success);
+    return (*tok = (Tok){type, buf, 2 + plus}, Success);
 
   if (d == termn && c != '\\')
-    return (*tok = (Tok){type, 3 + plus}, Success);
+    return (*tok = (Tok){type, buf, 3 + plus}, Success);
 
   if (d == termn && c == '\\'  && b == '\\')
-    return (*tok = (Tok){type, 3 + plus}, Success);
+    return (*tok = (Tok){type, buf, 3 + plus}, Success);
 
   for (len = 1; len < sz; len++) {
     if (escape == false) {
-      if (buf[len] == termn) return (*tok = (Tok){type, len + plus}, Success);
+      if (buf[len] == termn) return (*tok = (Tok){type, buf, len + plus}, Success);
       if (buf[len] == '\\')  escape = true;
     }
     else escape = false;
@@ -168,25 +168,25 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
 
     case '-':
     if unlikely (b == '>')
-      return (*tok = (Tok){Punctuation, 2}, Success);
+      return (*tok = (Tok){Punctuation, buf, 2}, Success);
     case '&': case '<': case '>':
     case '|': case '+':
     if unlikely (b == a)
-      return (*tok = (Tok){Punctuation, 2 + ((a == '<' | a == '>') & (c == '='))}, Success);
+      return (*tok = (Tok){Punctuation, buf, 2 + ((a == '<' | a == '>') & (c == '='))}, Success);
     case '^': case '=': case '*':
     case '%': case '!':
-    return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
+    return (*tok = (Tok){Punctuation, buf, 1 + (b == '=')}, Success);
 
     case '?':
-    return (*tok = (Tok){Punctuation, 1 + (b == ':')}, Success);
+    return (*tok = (Tok){Punctuation, buf, 1 + (b == ':')}, Success);
 
     case '(': case ')': case '[': case ']': case '.':
     case '{': case '}': case ':': case ';': case ',': case '~':
-    return (*tok = (Tok){Punctuation, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
+    return (*tok = (Tok){Punctuation, buf, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
 
     case '/':
     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], Punctuation, 2, '\n');
-    else                   return (*tok = (Tok){Punctuation, 1 + (b == '=')}, Success);
+    else                   return (*tok = (Tok){Punctuation, buf, 1 + (b == '=')}, Success);
 
     default: __builtin_unreachable();
 

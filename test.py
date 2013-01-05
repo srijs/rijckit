@@ -31,7 +31,7 @@ while run:
       ctx.sz += 1
 
   if ret.state == 'Success':
-    TOKENS.append((copy(tok.type), ffi.buffer(ctx.buf, tok.len)[:].encode("string-escape"), ret.t, ret.t / tok.len))
+    TOKENS.append((copy(tok.type), ffi.buffer(tok.ptr, tok.len)[:].encode("string-escape"), ret.t, ret.t / tok.len))
     ctx.buf += tok.len
     ctx.sz  -= tok.len
     if ctx.sz < 4:
@@ -46,7 +46,7 @@ while run:
       run = False
 
   elif ret.state == 'Fail':
-    print 'Fail, Tok: %s, Char: %s' % (tok.type, buf[0])
+    print 'Fail, Tok: %s, Char: %s' % (tok.type, ctx.buf[0])
     run = False
 
   elif ret.state == 'End':
