@@ -35,11 +35,6 @@ typedef enum {
 } NS(State);
 
 typedef struct {
-  NS(State) state;
-  unsigned long long int t;
-} NS(Return);
-
-typedef struct {
   enum {
     NS(Undefined),
     NS(Number),
@@ -52,10 +47,11 @@ typedef struct {
   } type;
   char *ptr;
   size_t len;
+  unsigned long long int t;
 } NS(Tok);
 
 // ## Interface
 
-NS(Return) lex(NS(Ctx) *const, NS(Tok) *);
+NS(State) lex(NS(Ctx) *const, NS(Tok) *);
 
 #undef NS

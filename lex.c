@@ -299,7 +299,7 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
 
 // ### Lex
 
-Return lex (Ctx *const ctx, Tok *token) {
+State lex (Ctx *const ctx, Tok *token) {
 
   unsigned long long t0 = 0, t1 = 0;
 
@@ -326,7 +326,9 @@ Return lex (Ctx *const ctx, Tok *token) {
     ctx->sz   -= token->len;
   }
 
-  return (Return){s, t1 - t0};
+  token->t = t1 - t0;
+
+  return s;
 
 }
 

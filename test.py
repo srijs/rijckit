@@ -24,7 +24,7 @@ ctx.sz = stdin.readinto(ffi.buffer(buf, ctx.back_sz))
 
 run = True
 while run:
-    ret = Lex.lex(ctx, toks)
+    st = Lex.lex(ctx, toks)
 
     def refill():
         ctx.sz += stdin.readinto(ffi.buffer(ctx.buf + ctx.sz, ctx.back_sz - ctx.sz))
@@ -32,22 +32,22 @@ while run:
             ctx.buf[ctx.sz] = '\0'
             ctx.sz += 1
 
-    if ret.state == 'Success':
+    if st == 'Success':
         string = bufRD[toks[0].ptr - ctx.back_buf:
                        toks[0].ptr - ctx.back_buf + toks[0].len].encode('string-escape')
-        TOKENS.append((copy(toks[0].type), string, toks[0].len, ret.t))
+        TOKENS.append((copy(toks[0].type), string, toks[0].len, toks[0].t))
 
-    elif ret.state == 'Undecided':
+    elif st == 'Undecided':
         if ctx.sz < ctx.back_sz:
             refill()
         else:
             run = False
 
-    elif ret.state == 'Fail':
+    elif st == 'Fail':
         print 'Fail, Tok: %s, Char: %s' % (toks[0].type, ctx.buf[0])
         run = False
 
-    elif ret.state == 'End':
+    elif st == 'End':
         run = False
 
 x_length = []
