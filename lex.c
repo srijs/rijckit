@@ -14,7 +14,7 @@
 // 6. To use no heap space by utilizing continuation-passing-style and
 //    performing allocations solely on the stack.
 
-#include <stddef.h>
+#include <sys/types.h>
 #include <stdbool.h>
 
 // Type-declarations and interfaces of this lexer are found in the `lex.h`
@@ -321,7 +321,7 @@ State lex (Ctx *const ctx, Tok *token) {
   }
 
   if (s == Success) {
-    token->ptr = ctx->buf;
+    token->off = ctx->buf - ctx->back_buf;
     ctx->buf  += token->len;
     ctx->sz   -= token->len;
   }

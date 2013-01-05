@@ -45,7 +45,7 @@ typedef struct {
     NS(Punctuation),
     NS(Directive)
   } type;
-  char *ptr;
+  size_t off;
   size_t len;
   unsigned long long int t;
 } NS(Tok);
