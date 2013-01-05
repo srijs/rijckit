@@ -14,7 +14,7 @@ TOKENS = []
 
 Lex = ffi.dlopen('./liblex.so')
 
-tok = ffi.new('Tok *')
+toks = ffi.new('Tok []', 1)
 buf = ffi.new('char[]', 4096)
 ctx = ffi.new('Ctx *', [4096, 4096, buf, buf])
 
@@ -24,7 +24,7 @@ ctx.sz = stdin.readinto(ffi.buffer(buf, ctx.back_sz))
 
 run = True
 while run:
-    ret = Lex.lex(ctx, tok)
+    ret = Lex.lex(ctx, toks)
 
     def refill():
         ctx.sz += stdin.readinto(ffi.buffer(ctx.buf + ctx.sz, ctx.back_sz - ctx.sz))
@@ -33,9 +33,9 @@ while run:
             ctx.sz += 1
 
     if ret.state == 'Success':
-        string = bufRD[tok.ptr - ctx.back_buf:
-                       tok.ptr - ctx.back_buf + tok.len].encode('string-escape')
-        TOKENS.append((copy(tok.type), string, tok.len, ret.t))
+        string = bufRD[toks[0].ptr - ctx.back_buf:
+                       toks[0].ptr - ctx.back_buf + toks[0].len].encode('string-escape')
+        TOKENS.append((copy(toks[0].type), string, toks[0].len, ret.t))
 
     elif ret.state == 'Undecided':
         if ctx.sz < ctx.back_sz:
@@ -44,7 +44,7 @@ while run:
             run = False
 
     elif ret.state == 'Fail':
-        print 'Fail, Tok: %s, Char: %s' % (tok.type, ctx.buf[0])
+        print 'Fail, Tok: %s, Char: %s' % (toks[0].type, ctx.buf[0])
         run = False
 
     elif ret.state == 'End':
