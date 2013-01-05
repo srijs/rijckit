@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <string.h>
 
 // Type-declarations and interfaces of this lexer are found in the `lex.h`
 // header file.
@@ -289,15 +290,31 @@ Return lex (Ctx *const ctx, Tok *token) {
 
   unsigned long long t0 = 0, t1 = 0;
 
-  #ifdef BENCH
-    t0 = __builtin_readcyclecounter();
-  #endif
+  State s = Undecided;
 
-  State s = dispatch(token, ctx->sz, ctx->buf);
+  if (ctx->sz >= 4) {
 
-  #ifdef BENCH
-    t1 = __builtin_readcyclecounter();
-  #endif
+    #ifdef BENCH
+      t0 = __builtin_readcyclecounter();
+    #endif
+
+    s = dispatch(token, ctx->sz, ctx->buf);
+
+    #ifdef BENCH
+      t1 = __builtin_readcyclecounter();
+    #endif
+
+  }
+
+  if (s == Undecided) {
+    memmove(ctx->back_buf, ctx->buf, ctx->sz);
+    ctx->buf = ctx->back_buf;
+  }
+
+  if (s == Success) {
+    ctx->buf += token->len;
+    ctx->sz  -= token->len;
+  }
 
   return (Return){s, t1 - t0};
 
