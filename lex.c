@@ -309,20 +309,20 @@ State lex (Ctx *const ctx, Tok *token) {
   t0 = __builtin_readcyclecounter();
   #endif
 
-  s = (ctx->sz >= 4) ? dispatch(token, ctx->sz, ctx->buf) : Undecided;
+  s = (ctx->sz >= 4) ? dispatch(token, ctx->sz, &ctx->back_buf[ctx->off]) : Undecided;
 
   #ifdef BENCH
   t1 = __builtin_readcyclecounter();
   #endif
 
   if (s == Undecided) {
-    copy_fwd(ctx->back_buf, ctx->buf, ctx->sz);
-    ctx->buf = ctx->back_buf;
+    copy_fwd(&ctx->back_buf[0], &ctx->back_buf[ctx->off], ctx->sz);
+    ctx->off = 0;
   }
 
   if (s == Success) {
-    token->off = ctx->buf - ctx->back_buf;
-    ctx->buf  += token->len;
+    token->off = ctx->off;
+    ctx->off  += token->len;
     ctx->sz   -= token->len;
   }
 
