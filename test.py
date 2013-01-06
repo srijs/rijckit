@@ -16,7 +16,7 @@ Lex = ffi.dlopen('./liblex.so')
 
 toks = ffi.new('Tok []', 1)
 buf = ffi.new('char[]', 4096)
-ctx = ffi.new('Ctx *', [4096, 4096, 0, buf])
+ctx = ffi.new('Ctx *', [buf, 4096, 4096, 0])
 
 bufRW = ffi.buffer(buf, 4096)
 
@@ -31,10 +31,10 @@ while run:
         TOKENS.append((copy(toks[0].type), string, toks[0].len, toks[0].t))
 
     elif st == 'Undecided':
-        if ctx.off < ctx.back_sz:  # Refill
-            ctx.sz += stdin.readinto(ffi.buffer(ctx.back_buf + ctx.off + ctx.sz, ctx.back_sz - ctx.sz))
+        if ctx.off < ctx.cap:  # Refill
+            ctx.sz += stdin.readinto(ffi.buffer(ctx.buf + ctx.off + ctx.sz, ctx.cap - ctx.sz))
             while ctx.sz < 4:
-                ctx.back_buf[ctx.off + ctx.sz] = '\0'
+                ctx.buf[ctx.off + ctx.sz] = '\0'
                 ctx.sz += 1
         else:
             run = False

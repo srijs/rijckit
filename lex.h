@@ -17,9 +17,8 @@
 // contents of the latter.
 
 typedef struct {
-  size_t sz, back_sz;
-  size_t off;
-  char *back_buf;
+  char *buf;
+  size_t sz, cap, off;
 } NS(Ctx);
 
 // ### Token Structure
