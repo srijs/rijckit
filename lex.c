@@ -285,31 +285,39 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
 
 // ### Lex
 
-State lex (Ctx *const ctx, Tok *token) {
-
-  unsigned long long t0 = 0, t1 = 0;
+int lex (Ctx *const ctx, Tok *toks, int len) {
 
   State s;
+  int num;
 
   #ifdef BENCH
-  t0 = __builtin_readcyclecounter();
+  unsigned long long t0 = 0, t1 = 0;
   #endif
 
-  s = (ctx->sz >= 4) ? dispatch(token, ctx->sz, &ctx->buf[ctx->off]) : Undecided;
+  for (num = 0; num < len; num++) {
 
-  #ifdef BENCH
-  t1 = __builtin_readcyclecounter();
-  #endif
+    #ifdef BENCH
+    t0 = __builtin_readcyclecounter();
+    #endif
 
-  if (s == Success) {
-    token->off = ctx->off;
-    ctx->off  += token->len;
-    ctx->sz   -= token->len;
+    ctx->state = (ctx->sz >= 4) ? dispatch(&toks[num], ctx->sz, &ctx->buf[ctx->off]) : Undecided;
+
+    #ifdef BENCH
+    t1 = __builtin_readcyclecounter();
+    toks[num].t = t1 - t0;
+    #endif
+
+    if (ctx->state == Success) {
+      toks[num].off = ctx->off;
+      ctx->off  += toks[num].len;
+      ctx->sz   -= toks[num].len;
+    }
+
+    else break;
+
   }
 
-  token->t = t1 - t0;
-
-  return s;
+  return num;
 
 }
 

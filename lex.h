@@ -16,9 +16,15 @@
 // backbuffer and changes in size and position as we process the
 // contents of the latter.
 
+typedef enum {
+  NS(Success), NS(Fail),
+  NS(Undecided), NS(End)
+} NS(State);
+
 typedef struct {
   char *buf;
   size_t sz, cap, off;
+  NS(State) state;
 } NS(Ctx);
 
 // ### Token Structure
@@ -28,11 +34,6 @@ typedef struct {
 // Keywords, typenames and identifiers are summarized under the
 // `Identifier` token type. All kinds of punctuations have a common
 // type, comments are also understood as punctuation.
-
-typedef enum {
-  NS(Success), NS(Fail),
-  NS(Undecided), NS(End)
-} NS(State);
 
 typedef struct {
   enum {
@@ -47,11 +48,13 @@ typedef struct {
   } type;
   size_t off;
   size_t len;
+  #ifdef BENCH
   unsigned long long int t;
+  #endif
 } NS(Tok);
 
 // ## Interface
 
-NS(State) lex(NS(Ctx) *const, NS(Tok) *);
+int lex(NS(Ctx) *const, NS(Tok) *, int);
 
 #undef NS
