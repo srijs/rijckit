@@ -28,20 +28,6 @@
 #define likely(x)   (__builtin_expect(x, true))
 #define unlikely(x) (__builtin_expect(x, false))
 
-// ## Utils
-//
-// To provide radical independence of this library, we write some standard-
-// functions ourselves.
-
-static inline void copy_fwd (char *dst, const char *src, size_t len) {
-
-  size_t i;
-  for (i = 0; i < len; i++) {
-    dst[i] = src[i];
-  }
-
-}
-
 // ## Lexemes
 //
 // To provide good readability and understandability, the functionality of the
@@ -314,11 +300,6 @@ State lex (Ctx *const ctx, Tok *token) {
   #ifdef BENCH
   t1 = __builtin_readcyclecounter();
   #endif
-
-  if (s == Undecided) {
-    copy_fwd(&ctx->buf[0], &ctx->buf[ctx->off], ctx->sz);
-    ctx->off = 0;
-  }
 
   if (s == Success) {
     token->off = ctx->off;

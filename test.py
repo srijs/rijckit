@@ -1,8 +1,6 @@
 from cffi import FFI
 from sys import stdin
-
 from copy import copy
-
 from matplotlib import pyplot as plt
 
 ffi = FFI()
@@ -22,8 +20,7 @@ bufRW = ffi.buffer(buf, 4096)
 
 ctx.sz = stdin.readinto(bufRW)
 
-run = True
-while run:
+while True:
     st = Lex.lex(ctx, toks)
 
     if st == 'Success':
@@ -32,16 +29,18 @@ while run:
 
     elif st == 'Undecided':
         if ctx.off < ctx.cap:  # Refill
+            bufRW[:ctx.sz] = bufRW[ctx.off:ctx.off + ctx.sz]
+            ctx.off = 0
             ctx.sz += stdin.readinto(ffi.buffer(ctx.buf + ctx.off + ctx.sz, ctx.cap - ctx.sz))
             while ctx.sz < 4:
                 ctx.buf[ctx.off + ctx.sz] = '\0'
                 ctx.sz += 1
         else:
-            run = False
+            break
 
     else:
         print '-- State: %s' % st
-        run = False
+        break
 
 metrics = {'length': [], 'cycles': [], 'throughput': [], 'type': []}
 
