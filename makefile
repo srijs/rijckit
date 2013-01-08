@@ -2,15 +2,15 @@
 
 lib: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o
-	$(CC) -nostdlib -shared lex.o -o liblex.so
+	$(CC) -s -nostdlib -shared lex.o -o liblex.so
 
 bench: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o -DBENCH
 	$(CC) -nostdlib -shared lex.o -o liblex.so
 
 run: lib
-	cpp < lex.h > lex.hi
-	python test.py < lex.c
+	cpp < lex.h | grep -v "#" > lex.hi
+	luajit test.lua < lex.c
 	rm lex.hi
 
 verify: lex.h lex.c
