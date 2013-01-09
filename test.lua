@@ -1,7 +1,7 @@
 local ffi = require 'ffi'
 
-io.input('lex.hi')
-ffi.cdef(io.read('*all'))
+ffi.cdef('int read(int, void *, size_t)')
+ffi.cdef(io.open('lex.hi', 'r'):read('*all'))
 
 local lex = ffi.load('./liblex.so')
 
@@ -11,14 +11,11 @@ local ctx  = ffi.new('Ctx', buf, 4096, 4096, 0)
 
 local tokens = {}
 
-io.input(io.stdin)
-local str = io.read(4096)
-ctx.sz = #str
-ffi.copy(buf, str, ctx.sz)
+ctx.sz = ffi.C.read(0, buf, 4096)
 
 while true do
 
-  num = lex.lex(ctx, toks, 16)
+  local num = lex.lex(ctx, toks, 16)
   
   for i = 0, num-1 do
     table.insert(tokens, {type   = toks[i].type,
@@ -26,29 +23,20 @@ while true do
                           len    = tonumber(toks[i].len)})
   end
 
-  if ctx.state == lex.Success then
-
-  elseif ctx.state == lex.Undecided then
+  if ctx.state == lex.Undecided then
     if ctx.off < ctx.cap then
       ffi.copy(buf, buf + ctx.off, ctx.sz)
       ctx.off = 0
-      str = io.read(tonumber(ctx.cap - ctx.sz))
-      if str then
-        ffi.copy(buf + ctx.sz, str, ctx.cap - ctx.sz)
-        ctx.sz = ctx.sz + #str
-        while ctx.sz < 4 do
-          ctx.buf[ctx.sz] = 0
-          ctx.sz = ctx.sz + 1
-        end
-      else
-        ffi.fill(buf + ctx.sz, 4)
+      ctx.sz = ctx.sz + ffi.C.read(0, buf + ctx.sz, ctx.cap - ctx.sz)
+      if ctx.sz < 4 then
+        ffi.fill(buf + ctx.sz, 4 - ctx.sz)
         ctx.sz = 4
       end
     else
       break
     end
 
-  else
+  elseif ctx.state == lex.End or ctx.state == lex.Fail then
     print(string.format('-- State: %d', ctx.state))
     break
 
