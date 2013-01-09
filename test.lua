@@ -18,7 +18,7 @@ while true do
   local num = lex.lex(ctx, toks, 16)
   
   for i = 0, num-1 do
-    table.insert(tokens, {type   = toks[i].type,
+    table.insert(tokens, {type   = tonumber(toks[i].type),
                           string = ffi.string(buf + toks[i].off, toks[i].len),
                           len    = tonumber(toks[i].len)})
   end
@@ -37,7 +37,7 @@ while true do
     end
 
   elseif ctx.state == lex.End or ctx.state == lex.Fail then
-    print(string.format('-- State: %d', ctx.state))
+    print(string.format('-- State: %d', tonumber(ctx.state)))
     break
 
   end
