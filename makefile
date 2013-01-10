@@ -9,9 +9,8 @@ bench: lex.h lex.c
 	$(CC) -nostdlib -shared lex.o -o liblex.so
 
 run: lib
-	cpp < lex.h | grep -v "#" > lex.hi
-	luajit test.lua < lex.c
-	rm lex.hi
+	cpp < lex.h | grep -v "#" > scripts/lex.h
+	cd scripts && luajit run.lua < ../lex.c
 
 verify: lex.h lex.c
 	$(CC) -std=c99 -Os lex.c -S -o .asm.s
