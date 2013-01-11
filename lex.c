@@ -217,26 +217,15 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
 // \end{array}
 // </script>
 
-static inline int classify (char c) {
-
-  switch (c) {
-
-    case '"':                       return String;
-    case '\'':                      return Character;
-    case '#':                       return Directive;
-    case '0'...'9':                 return Number;
-    case ' ': case '\t':
-    case '\n': case '\r':           return Whitespace;
-    case 'A'...'Z':
-    case 'a'...'z': case '_':       return Identifier;
-    case '!': case '%': case '&':
-    case '('...'/': case ':'...'?':
-    case '['...'^': case '{'...'~': return Punctuation;
-    default:                        return Undefined;
-
-  }
-
-}
+#define STRING      case '"'
+#define CHARACTER   case '\''
+#define DIRECTIVE   case '#'
+#define NUMBER      case '0'...'9'
+#define WHITESPACE  case ' ': case '\t': case '\n': case '\r'
+#define IDENTIFIER  case 'A'...'Z': case 'a'...'z': case '_'
+#define PUNCTUATION case '!': case '%': case '&':   \
+                    case '('...'/': case ':'...'?': \
+                    case '['...'^': case '{'...'~'
 
 // ### Dispatch
 //
@@ -267,17 +256,16 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
     __builtin_unreachable();
   }
 
-  switch (classify(buf[0])) {
+  switch (buf[0]) {
 
-    case String:      return tau(tok, sz, buf, String,    1, '"');
-    case Character:   return tau(tok, sz, buf, Character, 1, '\'');
-    case Directive:   return tau(tok, sz, buf, Directive, 0, '\n');
-    case Number:      return nu(tok, sz, buf);
-    case Whitespace:  return alpha(tok, sz, buf, Whitespace, is_whitespace);
-    case Identifier:  return alpha(tok, sz, buf, Identifier, is_alnum);
-    case Punctuation: return pi(tok, sz, buf);
-    case Undefined:   return (buf[0] ? Fail : End);
-    default:          __builtin_unreachable();
+    STRING:      return tau(tok, sz, buf, String,    1, '"');
+    CHARACTER:   return tau(tok, sz, buf, Character, 1, '\'');
+    DIRECTIVE:   return tau(tok, sz, buf, Directive, 0, '\n');
+    NUMBER:      return nu(tok, sz, buf);
+    WHITESPACE:  return alpha(tok, sz, buf, Whitespace, is_whitespace);
+    IDENTIFIER:  return alpha(tok, sz, buf, Identifier, is_alnum);
+    PUNCTUATION: return pi(tok, sz, buf);
+    default:     return (buf[0] ? Fail : End);
 
   }
 
