@@ -196,26 +196,11 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
 
 // ## Main
 
-// ### Classification
-//
-// We classify an ASCII-character into one of eight categories, depending on
+// ### Classification & Dispatch
+
+// We classify an ASCII-character into one of seven categories, depending on
 // which type of token it may introduce. We use this information later to
 // dispatch into subfunctions.
-//
-// <script type="math/tex">
-// \begin{array}{lrl}
-//   T_S &:=& 34 \in \text{ASCII} \\
-//   T_C &:=& 39 \in \text{ASCII} \\
-//   T_D &:=& 35 \in \text{ASCII} \\
-//   N   &:=& \{a \in \text{ASCII} : \text{$a$ is numerical}\}    = [48,57] \\
-//   A_W &:=& \{a \in \text{ASCII} : \text{$a$ is whitespace}\}   = \{9,10,13,32\} \\
-//   A_I &:=& \{a \in \text{ASCII} : \text{$a$ is alphabetical}\} \\
-//        &=& [65, 122] \setminus \{91,92,93,94,96\} \\
-//   P   &:=& \{a \in \text{ASCII} : \text{$a$ introduces punctuation}\} \\
-//        &=& \{33,37,38\} \cup [40,47] \cup [58,63] \cup [91,94] \cup [123,126] \\
-//   U   &:=& \text{ASCII} \setminus (T_S \cup T_C \cup T_D \cup N \cup A_W \cup A_I \cup P)
-// \end{array}
-// </script>
 
 #define STRING      case '"'
 #define CHARACTER   case '\''
@@ -227,28 +212,10 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
                     case '('...'/': case ':'...'?': \
                     case '['...'^': case '{'...'~'
 
-// ### Dispatch
-//
 // Based on the first character of the input buffer, we route the
 // tokenization process to a specific lexeme function.
 // We require that the length of our buffer is at least four characters, else
 // the behaviour of this function is undefined.
-//
-// <script type="math/tex">
-// \delta (n, s) :=
-//   \begin{cases}
-//     \text{undefined}                             &\mbox{if } n < 4       \\
-//     \tau   (n, s, \text{String},    1, T_S)      &\mbox{if } s_0 = T_S   \\
-//     \tau   (n, s, \text{Character}, 1, T_C)      &\mbox{if } s_0 = T_C   \\
-//     \tau   (n, s, \text{Directive}, 0, T_D)      &\mbox{if } s_0 = T_D   \\
-//     \nu    (n, s, \text{Number})                 &\mbox{if } s_0 \in N   \\
-//     \alpha (n, s, \text{Whitespace}, A_S)        &\mbox{if } s_0 \in A_S \\
-//     \alpha (n, s, \text{Identifier}, A_I \cup N) &\mbox{if } s_0 \in A_I \\
-//     \pi    (n, s, \text{Punctuation})            &\mbox{if } s_0 \in P   \\
-//     \langle\text{Undefined},\text{End},0\rangle  &\mbox{if } s_0 = 0     \\
-//     \langle\text{Undefined},\text{Fail},0\rangle &\mbox{otherwise}
-//   \end{cases}
-// </script>
 
 static inline State dispatch (Tok *tok, size_t sz, char *buf) {
 
@@ -308,7 +275,3 @@ int lex (Ctx *const ctx, Tok *toks, int len) {
   return num;
 
 }
-
-// <script type="text/javascript"
-//         src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
-// </script>
