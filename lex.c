@@ -28,15 +28,29 @@
 #define likely(x)   (__builtin_expect(x, true))
 #define unlikely(x) (__builtin_expect(x, false))
 
+// ## Utils
+//
+// To reduce dependencies and allow the compiler to produce more efficient
+// code through inlining, we provide implementations of some standard functions.
+
+static inline bool ut_isalnum (char c) {
+  return ((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'z'))
+       | ((c >= '0') & (c <= '9')) | (c == '_');
+}
+
+static inline bool ut_isspace (char c) {
+  return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
+}
+
 // ## Lexemes
 //
 // To provide good readability and understandability, the functionality of the
-// lexer as a whole is factored into its individual lexemes. Each of those is
-// provided as a static function, taking the current context of the lexing
-// process as a parameter, writing the matched token structure and returning
-// its state.
+// lexer as a whole is factored into several matchers. Each of those is
+// provided as a static function that scans the buffer it is passed for a
+// specific configurable pattern and writing the match into a provided token-
+// buffer.
 
-// ### Lexeme: Number
+// ### Matcher: Number
 // Stub.
 
 static inline State nu (Tok *tok, size_t sz, char *buf) {
@@ -51,26 +65,9 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
 
 }
 
-// ### Lexeme: Identifier & Whitespace
-//
-// `identifier ::= ( A-Z | a-z | _ ) { ( A-z | a-z | 0-9 | _ ) }`
-//
-// `whitespace ::= ( Space | Tab | NL | CR ) { whitespace }`
-//
-// An identifier is an _arbitrary long_ sequence of alphanumerics and underscore
-// characters.
-//
-// Whitespace is an _arbitrary long_ sequence of space, tab, new-line and
-// carriage-return characters.
-
-static inline bool is_alnum (char c) {
-  return ((c >= 'A') & (c <= 'Z')) | ((c >= 'a') & (c <= 'z'))
-       | ((c >= '0') & (c <= '9')) | (c == '_');
-}
-
-static inline bool is_whitespace (char c) {
-  return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
-}
+// ### Matcher: Alpha
+// The alpha-matcher accepts characters from the input buffer,
+// as long as they match with the supplied checking-function.
 
 static inline State alpha (Tok *tok, size_t sz, char *buf, int type, bool (*check)(char)) {
 
@@ -93,20 +90,13 @@ static inline State alpha (Tok *tok, size_t sz, char *buf, int type, bool (*chec
 
 }
 
-// ### Lexeme: String, Character & Pre-Processor Directive
-//
-// `string    ::= Dbl-Quote ( Char-Seq ) Dbl-Quote`
-//
-// `character ::= S-Quote   ( Char-Seq ) S-Quote`
-//
-// `directive ::= Hash      ( Seq      ) Newline`
-//
-// A string literal is a string of ASCII-identifier between two double quotes.
-//
-// A character literal is a string of ASCII-identifier between two single quotes.
-//
-// A preprocessor directive is introduced by a hash character (`#`) and end with
-// an unescaped newline.
+// ### Matcher: Tau
+// The tau matcher accepts characters from the input-buffer until it sees an
+// unescaped termination character.
+// It also accepts a parameter `plus` which indicates whether the terminator
+// should be part of the tokens length.
+// This function is currently used to match string- and character-literals as
+// well as preprocessor directives.
 
 static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, char termn) {
 
@@ -138,12 +128,11 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
 
 }
 
-// ### Lexeme: Punctuation
-//
+// ### Matcher: Punctuation
 // In this function we switch on the first character of the buffer,
 // and then perform further checks to determine the type of punctuation.
 // Because the switch statement uses falltrough-techniques, we'll explain
-// it's functionality carefully.
+// it's functionality in greater extend.
 //
 // In the first part of the switch statement, we match the arrow (`->`) as
 // well as all punctuation that potentially may repeat itself or be followed
@@ -229,8 +218,8 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
     CHARACTER:   return tau(tok, sz, buf, Character, 1, '\'');
     DIRECTIVE:   return tau(tok, sz, buf, Directive, 0, '\n');
     NUMBER:      return nu(tok, sz, buf);
-    WHITESPACE:  return alpha(tok, sz, buf, Whitespace, is_whitespace);
-    IDENTIFIER:  return alpha(tok, sz, buf, Identifier, is_alnum);
+    WHITESPACE:  return alpha(tok, sz, buf, Whitespace, ut_isspace);
+    IDENTIFIER:  return alpha(tok, sz, buf, Identifier, ut_isalnum);
     PUNCTUATION: return pi(tok, sz, buf);
     default:     return (buf[0] ? Fail : End);
 
