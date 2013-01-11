@@ -16,11 +16,9 @@
 
 #include <sys/types.h>
 #include <stdbool.h>
-
-// Type-declarations and interfaces of this lexer are found in the `lex.h`
-// header file.
-
 #include "lex.h"
+
+// ## Utils
 
 // In order to optimize code-paths, we define two convenience macros to give
 // branch-prediction information to the compiler.
@@ -28,8 +26,6 @@
 #define likely(x)   (__builtin_expect(x, true))
 #define unlikely(x) (__builtin_expect(x, false))
 
-// ## Utils
-//
 // To reduce dependencies and allow the compiler to produce more efficient
 // code through inlining, we provide implementations of some standard functions.
 
