@@ -134,20 +134,20 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
 // Because the switch statement uses falltrough-techniques, we'll explain
 // it's functionality in greater extend.
 //
-// In the first part of the switch statement, we match the arrow (`->`) as
-// well as all punctuation that potentially may repeat itself or be followed
-// by an equal-sign to form a multicharacter-punctuation.
+// 1. In the first part of the switch statement, we match the arrow (`->`) as
+//    well as all punctuation that potentially may repeat itself or be followed
+//    by an equal-sign to form a multicharacter-punctuation.
 //
-// The second part matches the teriary-expression punctuation `?` and `?:`.
+// 2. The second part matches the teriary-expression punctuation `?` and `?:`.
 //
-// After that, all monocharacter punctuation is matched.
+// 3. After that, all monocharacter punctuation is matched.
 //
-// The last block checks if `/` stands for itself, is part of an `/=` or
-// introduces a comment.
+// 4. The last block checks if `/` stands for itself, is part of an `/=` or
+//    introduces a comment.
 //
-// Since at the end of the switch-statement all valid punctuation should have
-// been matched and returned from the function, we can declare the following
-// codepath as undefined.
+// 5. Since at the end of the switch-statement all valid punctuation should have
+//    been matched and returned from the function, we can declare the following
+//    codepath as undefined.
 
 static inline State pi (Tok *tok, size_t sz, char *buf) {
 
@@ -208,12 +208,9 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
 
 static inline State dispatch (Tok *tok, size_t sz, char *buf) {
 
-  if (sz < 4) {
-    __builtin_unreachable();
-  }
+  if (sz < 4) __builtin_unreachable();
 
   switch (buf[0]) {
-
     STRING:      return tau(tok, sz, buf, String,    1, '"');
     CHARACTER:   return tau(tok, sz, buf, Character, 1, '\'');
     DIRECTIVE:   return tau(tok, sz, buf, Directive, 0, '\n');
@@ -222,7 +219,6 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
     IDENTIFIER:  return alpha(tok, sz, buf, Identifier, ut_isalnum);
     PUNCTUATION: return pi(tok, sz, buf);
     default:     return (buf[0] ? Fail : End);
-
   }
 
 }
@@ -234,22 +230,22 @@ int lex (Ctx *const ctx, Tok *toks, int len) {
   State s;
   int num;
 
-  #ifdef BENCH
+#ifdef BENCH
   unsigned long long t0 = 0, t1 = 0;
-  #endif
+#endif
 
   for (num = 0; num < len; num++) {
 
-    #ifdef BENCH
+#ifdef BENCH
     t0 = __builtin_readcyclecounter();
-    #endif
+#endif
 
     ctx->state = (ctx->sz >= 4) ? dispatch(&toks[num], ctx->sz, &ctx->buf[ctx->off]) : Undecided;
 
-    #ifdef BENCH
+#ifdef BENCH
     t1 = __builtin_readcyclecounter();
     toks[num].t = t1 - t0;
-    #endif
+#endif
 
     if (ctx->state == Success) {
       toks[num].off = ctx->off;
