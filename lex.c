@@ -145,35 +145,32 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
 //    been matched and returned from the function, we can declare the following
 //    codepath as undefined.
 
+#define PI_ARROW     case '-'
+#define PI_REPEAT    case '&': case '<': case '>': case '|': case '+'
+#define PI_EQ_FOLLOW case '^': case '=': case '*': case '%': case '!'
+#define PI_TERTIARY  case '?'
+#define PI_MONO      case '(': case ')': case '[': case ']': case '.': \
+                     case '{': case '}': case ':': case ';': case ',': case '~'
+#define PI_SLASH     case '/'
+
 static inline State pi (Tok *tok, size_t sz, char *buf) {
 
   char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
 
-    case '-':
-    if unlikely (b == '>')
-      return (*tok = (Tok){Punctuation, 0, 2}, Success);
-    case '&': case '<': case '>':
-    case '|': case '+':
-    if unlikely (b == a)
-      return (*tok = (Tok){Punctuation, 0, 2 + ((a == '<' | a == '>') & (c == '='))}, Success);
-    case '^': case '=': case '*':
-    case '%': case '!':
-    return (*tok = (Tok){Punctuation, 0, 1 + (b == '=')}, Success);
+    PI_ARROW:     if unlikely (b == '>') return (*tok = (Tok){Punctuation, 0, 2}, Success);
+    PI_REPEAT:    if unlikely (b == a)   return (*tok = (Tok){Punctuation, 0, 2 + ((a == '<' | a == '>') & (c == '='))}, Success);
+    PI_EQ_FOLLOW: return (*tok = (Tok){Punctuation, 0, 1 + (b == '=')}, Success);
 
-    case '?':
-    return (*tok = (Tok){Punctuation, 0, 1 + (b == ':')}, Success);
+    PI_TERTIARY:  return (*tok = (Tok){Punctuation, 0, 1 + (b == ':')}, Success);
 
-    case '(': case ')': case '[': case ']': case '.':
-    case '{': case '}': case ':': case ';': case ',': case '~':
-    return (*tok = (Tok){Punctuation, 0, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
+    PI_MONO:      return (*tok = (Tok){Punctuation, 0, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
 
-    case '/':
-    if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], Punctuation, 2, '\n');
-    else                   return (*tok = (Tok){Punctuation, 0, 1 + (b == '=')}, Success);
+    PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], Punctuation, 2, '\n');
+                  else                   return (*tok = (Tok){Punctuation, 0, 1 + (b == '=')}, Success);
 
-    default: __builtin_unreachable();
+    default:      __builtin_unreachable();
 
   }
 
