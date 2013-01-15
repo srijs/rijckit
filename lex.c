@@ -65,24 +65,24 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
 // The alpha-matcher accepts characters from the input buffer,
 // as long as they match with the supplied checking-function.
 
-static inline State alpha (Tok *tok, size_t sz, char *buf, int type, bool (*check)(char)) {
+static inline State alpha (Tok *tok, size_t sz, char *buf, bool (*check)(char)) {
 
   size_t len;
 
   if (check(buf[1]) == 0)
-    return (*tok = (Tok){type, 0, 1}, Success);
+    return (tok->len = 1, Success);
 
   if (check(buf[2]) == 0)
-    return (*tok = (Tok){type, 0, 2}, Success);
+    return (tok->len = 2, Success);
 
   if (check(buf[3]) == 0)
-    return (*tok = (Tok){type, 0, 3}, Success);
+    return (tok->len = 3, Success);
 
   for (len = 4; len < sz; len++) {
-    if (check(buf[len]) == 0) return (*tok = (Tok){type, 0, len}, Success);
+    if (check(buf[len]) == 0) return (tok->len = len, Success);
   }
 
-  return (*tok = (Tok){type}, Undecided);
+  return Undecided;
 
 }
 
@@ -94,33 +94,33 @@ static inline State alpha (Tok *tok, size_t sz, char *buf, int type, bool (*chec
 // This function is currently used to match string- and character-literals as
 // well as preprocessor directives.
 
-static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, char termn) {
+static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
 
   size_t len;
   bool escape = false;
   char b = buf[1], c = buf[2], d = buf[3];
 
   if (b == termn)
-    return (*tok = (Tok){type, 0, 1 + plus}, Success);
+    return (tok->len = 1 + plus, Success);
 
   if (c == termn && b != '\\')
-    return (*tok = (Tok){type, 0, 2 + plus}, Success);
+    return (tok->len = 2 + plus, Success);
 
   if (d == termn && c != '\\')
-    return (*tok = (Tok){type, 0, 3 + plus}, Success);
+    return (tok->len = 3 + plus, Success);
 
   if (d == termn && c == '\\'  && b == '\\')
-    return (*tok = (Tok){type, 0, 3 + plus}, Success);
+    return (tok->len = 3 + plus, Success);
 
   for (len = 1; len < sz; len++) {
     if (escape == false) {
-      if (buf[len] == termn) return (*tok = (Tok){type, 0, len + plus}, Success);
+      if (buf[len] == termn) return (tok->len = len + plus, Success);
       if (buf[len] == '\\')  escape = true;
     }
     else escape = false;
   }
 
-  return (*tok = (Tok){type}, Undecided);
+  return Undecided;
 
 }
 
@@ -155,7 +155,6 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
 
 static inline State pi (Tok *tok, size_t sz, char *buf) {
 
-  tok->type = Punctuation;
   char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
@@ -168,7 +167,7 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
 
     PI_MONO:      return (tok->len = 1 + 2 * (a == '.' & b == '.' & c == '.'), Success);
 
-    PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], Punctuation, 2, '\n');
+    PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], 2, '\n');
                   else                   return (tok->len = 1 + (b == '='), Success);
 
     default:      __builtin_unreachable();
@@ -205,13 +204,13 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
   if (sz < 4) __builtin_unreachable();
 
   switch (buf[0]) {
-    STRING:      return tau(tok, sz, buf, String,    1, '"');
-    CHARACTER:   return tau(tok, sz, buf, Character, 1, '\'');
-    DIRECTIVE:   return tau(tok, sz, buf, Directive, 0, '\n');
-    NUMBER:      return nu(tok, sz, buf);
-    WHITESPACE:  return alpha(tok, sz, buf, Whitespace, ut_isspace);
-    IDENTIFIER:  return alpha(tok, sz, buf, Identifier, ut_isalnum);
-    PUNCTUATION: return pi(tok, sz, buf);
+    STRING:      {tok->type = String;      return tau(tok, sz, buf, 1, '"'); }
+    CHARACTER:   {tok->type = Character;   return tau(tok, sz, buf, 1, '\''); }
+    DIRECTIVE:   {tok->type = Directive;   return tau(tok, sz, buf, 0, '\n'); }
+    NUMBER:      {tok->type = Number;      return nu(tok, sz, buf); }
+    WHITESPACE:  {tok->type = Whitespace;  return alpha(tok, sz, buf, ut_isspace); }
+    IDENTIFIER:  {tok->type = Identifier;  return alpha(tok, sz, buf, ut_isalnum); }
+    PUNCTUATION: {tok->type = Punctuation; return pi(tok, sz, buf); }
     default:     return (buf[0] ? Fail : End);
   }
 
