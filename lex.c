@@ -133,14 +133,10 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
 // 1. In the first part of the switch statement, we match the arrow (`->`) as
 //    well as all punctuation that potentially may repeat itself or be followed
 //    by an equal-sign to form a multicharacter-punctuation.
-//
 // 2. The second part matches the teriary-expression punctuation `?` and `?:`.
-//
 // 3. After that, all monocharacter punctuation is matched.
-//
 // 4. The last block checks if `/` stands for itself, is part of an `/=` or
 //    introduces a comment.
-//
 // 5. Since at the end of the switch-statement all valid punctuation should have
 //    been matched and returned from the function, we can declare the following
 //    codepath as undefined.
@@ -162,14 +158,10 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
     PI_ARROW:     if unlikely (b == '>') return (tok->len = 2, Success);
     PI_REPEAT:    if unlikely (b == a)   return (tok->len = 2 + ((a == '<' | a == '>') & (c == '=')), Success);
     PI_EQ_FOLLOW: return (tok->len = 1 + (b == '='), Success);
-
     PI_TERTIARY:  return (tok->len = 1 + (b == ':'), Success);
-
     PI_MONO:      return (tok->len = 1 + 2 * (a == '.' & b == '.' & c == '.'), Success);
-
     PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], 2, '\n');
                   else                   return (tok->len = 1 + (b == '='), Success);
-
     default:      __builtin_unreachable();
 
   }
