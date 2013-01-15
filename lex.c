@@ -155,20 +155,21 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int type, int plus, cha
 
 static inline State pi (Tok *tok, size_t sz, char *buf) {
 
+  tok->type = Punctuation;
   char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
 
-    PI_ARROW:     if unlikely (b == '>') return (*tok = (Tok){Punctuation, 0, 2}, Success);
-    PI_REPEAT:    if unlikely (b == a)   return (*tok = (Tok){Punctuation, 0, 2 + ((a == '<' | a == '>') & (c == '='))}, Success);
-    PI_EQ_FOLLOW: return (*tok = (Tok){Punctuation, 0, 1 + (b == '=')}, Success);
+    PI_ARROW:     if unlikely (b == '>') return (tok->len = 2, Success);
+    PI_REPEAT:    if unlikely (b == a)   return (tok->len = 2 + ((a == '<' | a == '>') & (c == '=')), Success);
+    PI_EQ_FOLLOW: return (tok->len = 1 + (b == '='), Success);
 
-    PI_TERTIARY:  return (*tok = (Tok){Punctuation, 0, 1 + (b == ':')}, Success);
+    PI_TERTIARY:  return (tok->len = 1 + (b == ':'), Success);
 
-    PI_MONO:      return (*tok = (Tok){Punctuation, 0, 1 + 2 * (a == '.' & b == '.' & c == '.')}, Success);
+    PI_MONO:      return (tok->len = 1 + 2 * (a == '.' & b == '.' & c == '.'), Success);
 
     PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], Punctuation, 2, '\n');
-                  else                   return (*tok = (Tok){Punctuation, 0, 1 + (b == '=')}, Success);
+                  else                   return (tok->len = 1 + (b == '='), Success);
 
     default:      __builtin_unreachable();
 

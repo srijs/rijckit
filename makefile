@@ -1,4 +1,4 @@
-.PHONY: sloc
+.PHONY: sloc docs
 
 lib: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o
