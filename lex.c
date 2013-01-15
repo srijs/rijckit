@@ -62,6 +62,7 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
 }
 
 // ### Matcher: Alpha
+//
 // The alpha-matcher accepts characters from the input buffer,
 // as long as they match with the supplied checking-function.
 
@@ -87,6 +88,7 @@ static inline State alpha (Tok *tok, size_t sz, char *buf, bool (*check)(char)) 
 }
 
 // ### Matcher: Tau
+//
 // The tau matcher accepts characters from the input-buffer until it sees an
 // unescaped termination character.
 // It also accepts a parameter `plus` which indicates whether the terminator
@@ -125,6 +127,7 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
 }
 
 // ### Matcher: Punctuation
+//
 // In this function we switch on the first character of the buffer,
 // and then perform further checks to determine the type of punctuation.
 // Because the switch statement uses falltrough-techniques, we'll explain
@@ -154,7 +157,6 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
   char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
-
     PI_ARROW:     if unlikely (b == '>') return (tok->len = 2, Success);
     PI_REPEAT:    if unlikely (b == a)   return (tok->len = 2 + ((a == '<' | a == '>') & (c == '=')), Success);
     PI_EQ_FOLLOW: return (tok->len = 1 + (b == '='), Success);
@@ -163,7 +165,6 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
     PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], 2, '\n');
                   else                   return (tok->len = 1 + (b == '='), Success);
     default:      __builtin_unreachable();
-
   }
 
 }
