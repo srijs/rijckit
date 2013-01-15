@@ -21,13 +21,14 @@ function lexer.new(tsz, bsz)
 
   local obj = {}
 
-  function obj.chunk()
+  function obj.chunk(bench)
     local tokens = {}
     local num = lib.lex(ctx, tok, tsz)
     for i = 0, num-1 do
       table.insert(tokens, {type   = tonumber(tok[i].type),
                             string = ffi.string(buf + tok[i].off, tok[i].len),
                             len    = tonumber(tok[i].len)})
+      if bench then tokens[#tokens].cycles = tonumber(tok[i].t) end
     end
     return tonumber(ctx.state), tokens
   end

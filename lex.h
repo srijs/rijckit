@@ -48,9 +48,7 @@ typedef struct {
   } type;
   size_t off;
   size_t len;
-#ifdef BENCH
   unsigned long long int t;
-#endif
 } NS(Tok);
 
 // ## Interface

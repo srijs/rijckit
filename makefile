@@ -6,7 +6,7 @@ lib: lex.h lex.c
 
 bench: lex.h lex.c
 	$(CC) -c -fPIC -std=c99 -Os lex.c -o lex.o -DBENCH
-	$(CC) -nostdlib -shared lex.o -o liblex.so
+	$(CC) -shared lex.o -o liblex.so
 
 run: lib
 	cpp < lex.h | grep -v "#" > scripts/lex.h
