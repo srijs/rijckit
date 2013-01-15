@@ -53,7 +53,7 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
 
   size_t len;
   for (len = 1; len < sz; len++) {
-    if (buf[len] < '0' || buf[len] > '9') {
+    if ((buf[len] < '0') | (buf[len] > '9')) {
       return (*tok = (Tok){Number, 0, len}, Success);
     }
   }
