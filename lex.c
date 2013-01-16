@@ -137,7 +137,7 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
 //    well as all punctuation that potentially may repeat itself or be followed
 //    by an equal-sign to form a multicharacter-punctuation.
 // 2. The second part matches the teriary-expression punctuation `?` and `?:`.
-// 3. After that, all monocharacter punctuation is matched.
+// 3. After that, the ellipsis and all monocharacter punctuation is matched.
 // 4. The last block checks if `/` stands for itself, is part of an `/=` or
 //    introduces a comment.
 // 5. Since at the end of the switch-statement all valid punctuation should have
@@ -148,8 +148,9 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
 #define PI_REPEAT    case '&': case '<': case '>': case '|': case '+'
 #define PI_EQ_FOLLOW case '^': case '=': case '*': case '%': case '!'
 #define PI_TERTIARY  case '?'
-#define PI_MONO      case '(': case ')': case '[': case ']': case '.': \
-                     case '{': case '}': case ':': case ';': case ',': case '~'
+#define PI_DOT       case '.'
+#define PI_MONO      case '(': case ')': case '[': case ']': case '~': \
+                     case '{': case '}': case ':': case ';': case ','
 #define PI_SLASH     case '/'
 
 static inline State pi (Tok *tok, size_t sz, char *buf) {
@@ -161,7 +162,8 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
     PI_REPEAT:    if unlikely (b == a)   return (tok->len = 2 + ((a == '<' | a == '>') & (c == '=')), Success);
     PI_EQ_FOLLOW: return (tok->len = 1 + (b == '='), Success);
     PI_TERTIARY:  return (tok->len = 1 + (b == ':'), Success);
-    PI_MONO:      return (tok->len = 1 + 2 * (a == '.' & b == '.' & c == '.'), Success);
+    PI_DOT:       if unlikely (b == '.' & c == '.') return (tok->len = 3, Success);
+    PI_MONO:      return (tok->len = 1, Success);
     PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], 2, '\n');
                   else                   return (tok->len = 1 + (b == '='), Success);
     default:      __builtin_unreachable();
