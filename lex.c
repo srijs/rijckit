@@ -49,15 +49,15 @@ static inline bool ut_isspace (char c) {
 // ### Matcher: Number
 // Stub.
 
-static inline State nu (Tok *tok, size_t sz, char *buf) {
+static inline State nu (Tok *tok, size_t sz, const char *buf) {
 
   size_t len;
   for (len = 1; len < sz; len++) {
     if ((buf[len] < '0') | (buf[len] > '9')) {
-      return (*tok = (Tok){Number, 0, len}, Success);
+      return (tok->len = len, Success);
     }
   }
-  return (*tok = (Tok){Number}, Undecided);
+  return Undecided;
 
 }
 
@@ -66,7 +66,7 @@ static inline State nu (Tok *tok, size_t sz, char *buf) {
 // The alpha-matcher accepts characters from the input buffer,
 // as long as they match with the supplied checking-function.
 
-static inline State alpha (Tok *tok, size_t sz, char *buf, bool (*check)(char)) {
+static inline State alpha (Tok *tok, size_t sz, const char *buf, bool (*check)(char)) {
 
   size_t len;
 
@@ -96,7 +96,7 @@ static inline State alpha (Tok *tok, size_t sz, char *buf, bool (*check)(char)) 
 // This function is currently used to match string- and character-literals as
 // well as preprocessor directives.
 
-static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
+static inline State tau (Tok *tok, size_t sz, const char *buf, int plus, char termn) {
 
   size_t len;
   bool escape = false;
@@ -153,7 +153,7 @@ static inline State tau (Tok *tok, size_t sz, char *buf, int plus, char termn) {
                      case '{': case '}': case ':': case ';': case ','
 #define PI_SLASH     case '/'
 
-static inline State pi (Tok *tok, size_t sz, char *buf) {
+static inline State pi (Tok *tok, size_t sz, const char *buf) {
 
   char a = buf[0], b = buf[1], c = buf[2];
 
@@ -194,7 +194,7 @@ static inline State pi (Tok *tok, size_t sz, char *buf) {
 // We require that the length of our buffer is at least four characters, else
 // the behaviour of this function is undefined.
 
-static inline State dispatch (Tok *tok, size_t sz, char *buf) {
+static inline State dispatch (Tok *tok, size_t sz, const char *buf) {
 
   if (sz < 4) __builtin_unreachable();
 
@@ -213,9 +213,8 @@ static inline State dispatch (Tok *tok, size_t sz, char *buf) {
 
 // ### Lex
 
-int lex (Ctx *const ctx, Tok *toks, int len) {
+int lex (Ctx * ctx, Tok *toks, int len) {
 
-  State s;
   int num;
 
 #ifdef BENCH
