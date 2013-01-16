@@ -38,7 +38,7 @@ static inline bool ut_isspace (char c) {
   return (c == ' ') | (c == '\t') | (c == '\n') | (c == '\r');
 }
 
-// ## Lexemes
+// ## Matchers
 //
 // To provide good readability and understandability, the functionality of the
 // lexer as a whole is factored into several matchers. Each of those is
@@ -46,18 +46,26 @@ static inline bool ut_isspace (char c) {
 // specific configurable pattern and writing the match into a provided token-
 // buffer.
 
+#define Matcher(name)      static inline State name _MARGS
+#define _MARGS(sz, buf...) (Tok *tok, size_t sz, const char *buf)
+
+#define success(l)   (tok->len = l, Success)
+#define undecided    (Undecided);
+#define redirect(m)  m _RARGS
+#define _RARGS(a...) (tok, a)
+
 // ### Matcher: Number
 // Stub.
 
-static inline State nu (Tok *tok, size_t sz, const char *buf) {
+Matcher (nu) (sz, buf) {
 
   size_t len;
   for (len = 1; len < sz; len++) {
     if ((buf[len] < '0') | (buf[len] > '9')) {
-      return (tok->len = len, Success);
+      return success (len);
     }
   }
-  return Undecided;
+  return undecided;
 
 }
 
@@ -66,24 +74,19 @@ static inline State nu (Tok *tok, size_t sz, const char *buf) {
 // The alpha-matcher accepts characters from the input buffer,
 // as long as they match with the supplied checking-function.
 
-static inline State alpha (Tok *tok, size_t sz, const char *buf, bool (*check)(char)) {
+Matcher (alpha) (sz, buf, bool (*check)(char)) {
 
   size_t len;
 
-  if (check(buf[1]) == 0)
-    return (tok->len = 1, Success);
-
-  if (check(buf[2]) == 0)
-    return (tok->len = 2, Success);
-
-  if (check(buf[3]) == 0)
-    return (tok->len = 3, Success);
+  if (check(buf[1]) == 0) return success (1);
+  if (check(buf[2]) == 0) return success (2);
+  if (check(buf[3]) == 0) return success (3);
 
   for (len = 4; len < sz; len++) {
-    if (check(buf[len]) == 0) return (tok->len = len, Success);
+    if (check(buf[len]) == 0) return success (len);
   }
 
-  return Undecided;
+  return undecided;
 
 }
 
@@ -96,33 +99,26 @@ static inline State alpha (Tok *tok, size_t sz, const char *buf, bool (*check)(c
 // This function is currently used to match string- and character-literals as
 // well as preprocessor directives.
 
-static inline State tau (Tok *tok, size_t sz, const char *buf, int plus, char termn) {
+Matcher (tau) (sz, buf, int plus, char termn) {
 
   size_t len;
   bool escape = false;
   char b = buf[1], c = buf[2], d = buf[3];
 
-  if (b == termn)
-    return (tok->len = 1 + plus, Success);
-
-  if (c == termn && b != '\\')
-    return (tok->len = 2 + plus, Success);
-
-  if (d == termn && c != '\\')
-    return (tok->len = 3 + plus, Success);
-
-  if (d == termn && c == '\\'  && b == '\\')
-    return (tok->len = 3 + plus, Success);
+  if (b == termn)                            return success (1 + plus);
+  if (c == termn && b != '\\')               return success (2 + plus);
+  if (d == termn && c != '\\')               return success (3 + plus);
+  if (d == termn && c == '\\'  && b == '\\') return success (3 + plus);
 
   for (len = 1; len < sz; len++) {
     if (escape == false) {
-      if (buf[len] == termn) return (tok->len = len + plus, Success);
+      if (buf[len] == termn) return success (len + plus);
       if (buf[len] == '\\')  escape = true;
     }
     else escape = false;
   }
 
-  return Undecided;
+  return undecided;
 
 }
 
@@ -153,19 +149,19 @@ static inline State tau (Tok *tok, size_t sz, const char *buf, int plus, char te
                      case '{': case '}': case ':': case ';': case ','
 #define PI_SLASH     case '/'
 
-static inline State pi (Tok *tok, size_t sz, const char *buf) {
+Matcher (pi) (sz, buf) {
 
   char a = buf[0], b = buf[1], c = buf[2];
 
   switch (a) {
-    PI_ARROW:     if unlikely (b == '>') return (tok->len = 2, Success);
-    PI_REPEAT:    if unlikely (b == a)   return (tok->len = 2 + ((a == '<' | a == '>') & (c == '=')), Success);
-    PI_EQ_FOLLOW: return (tok->len = 1 + (b == '='), Success);
-    PI_TERTIARY:  return (tok->len = 1 + (b == ':'), Success);
-    PI_DOT:       if unlikely (b == '.' & c == '.') return (tok->len = 3, Success);
-    PI_MONO:      return (tok->len = 1, Success);
-    PI_SLASH:     if unlikely (b == '/') return tau(tok, sz - 2, &buf[2], 2, '\n');
-                  else                   return (tok->len = 1 + (b == '='), Success);
+    PI_ARROW:     if unlikely (b == '>') return success (2);
+    PI_REPEAT:    if unlikely (b == a)   return success (2 + ((a == '<' | a == '>') & (c == '=')));
+    PI_EQ_FOLLOW: return success (1 + (b == '='));
+    PI_TERTIARY:  return success (1 + (b == ':'));
+    PI_DOT:       if unlikely (b == '.' & c == '.') return success (3);
+    PI_MONO:      return success (1);
+    PI_SLASH:     if unlikely (b == '/') return redirect (tau) (sz - 2, &buf[2], 2, '\n');
+                  else                   return success  (1 + (b == '='));
     default:      __builtin_unreachable();
   }
 
